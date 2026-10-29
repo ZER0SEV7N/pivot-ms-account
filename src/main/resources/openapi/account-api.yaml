@@ -1,0 +1,438 @@
+openapi: 3.0.3
+info:
+  title: Pivot Banking System - Account Microservice API
+  description: |
+    RESTful Reactive API for managing Passive Bank Products (Savings, Checking, and Fixed-Term Accounts).
+    Enforces customer eligibility rules via reactive communication with ms-customer.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Local Development Server (ms-account)
+
+tags:
+  - name: Accounts
+    description: Operations for managing passive bank accounts and balances
+
+paths:
+  /accounts:
+    post:
+      tags:
+        - Accounts
+      summary: Open a new bank account
+      description: Creates a SAVINGS, CHECKING, or FIXED_TERM account after validating customer rules in ms-customer.
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+      responses:
+        '201':
+          description: Bank account opened successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Business rule violation (e.g., Business customer requesting Savings account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Referenced Customer ID does not exist in ms-customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Accounts
+      summary: Retrieve all bank accounts
+      operationId: getAllAccounts
+      responses:
+        '200':
+          description: Stream of all bank accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountResponse'
+
+  /accounts/{id}:
+    get:
+      tags:
+        - Accounts
+      summary: Get bank account by ID
+      operationId: getAccountById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bank account found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Bank account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Accounts
+      summary: Update an existing bank account
+      operationId: updateAccount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+      responses:
+        '200':
+          description: Bank account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Validation or business rule error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Bank account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Accounts
+      summary: Delete a bank account by ID
+      operationId: deleteAccount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Bank account deleted successfully
+        '404':
+          description: Bank account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/number/{accountNumber}:
+    get:
+      tags:
+        - Accounts
+      summary: Get bank account by Account Number
+      operationId: getAccountByNumber
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bank account found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Bank account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /accounts/customer/{customerId}:
+    get:
+      tags:
+        - Accounts
+      summary: Get all bank accounts belonging to a Customer
+      operationId: getAccountsByCustomerId
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of customer bank accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountResponse'
+
+  /accounts/{id}/balance:
+    get:
+      tags:
+        - Accounts
+      summary: Consult available balance of a bank account
+      operationId: getAccountBalance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available balance retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '404':
+          description: Bank account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Accounts
+      summary: Update account balance and movement counter (Used by ms-transaction)
+      operationId: updateAccountBalance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BalanceUpdateRequest'
+      responses:
+        '200':
+          description: Balance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Insufficient funds, monthly movement limit reached, or invalid day for FIXED_TERM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AccountType:
+      type: string
+      enum:
+        - SAVINGS
+        - CHECKING
+        - FIXED_TERM
+
+    AccountStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - BLOCKED
+        - CLOSED
+      default: ACTIVE
+
+    AccountRequest:
+      type: object
+      required:
+        - customerId
+        - accountType
+        - currency
+        - balance
+      properties:
+        accountNumber:
+          type: string
+          description: Optional on creation (auto-generated if omitted)
+          example: "191-12345678-0-01"
+        customerId:
+          type: string
+          description: Primary owner Customer ID from ms-customer
+          example: "671e9b4a8f1b2c3d4e5f6a7b"
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        currency:
+          type: string
+          enum: [PEN, USD]
+          default: PEN
+        balance:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 1500.00
+        maintenanceFee:
+          type: number
+          format: double
+          minimum: 0.0
+          description: 0 for SAVINGS and FIXED_TERM; > 0 for standard CHECKING
+          example: 0.00
+        maxMonthlyMovements:
+          type: integer
+          minimum: 1
+          description: Applicable for SAVINGS (e.g., 5) and FIXED_TERM (1)
+          example: 5
+        allowedMovementDay:
+          type: integer
+          minimum: 1
+          maximum: 31
+          description: Mandatory if accountType is FIXED_TERM (day of month 1-31)
+          example: 15
+        holders:
+          type: array
+          description: List of holder names/documents (at least 1 required for BUSINESS CHECKING)
+          items:
+            type: string
+          example: ["Daniel Singer"]
+        authorizedSigners:
+          type: array
+          description: List of authorized signers (0 or more for BUSINESS CHECKING)
+          items:
+            type: string
+          example: []
+        freeTransactionsLimit:
+          type: integer
+          default: 20
+        extraTransactionFee:
+          type: number
+          format: double
+          default: 2.50
+        minimumDailyAverage:
+          type: number
+          format: double
+          default: 0.00
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+
+    AccountResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        accountNumber:
+          type: string
+        customerId:
+          type: string
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        currency:
+          type: string
+        balance:
+          type: number
+        maintenanceFee:
+          type: number
+        maxMonthlyMovements:
+          type: integer
+          nullable: true
+        currentMonthlyMovements:
+          type: integer
+        allowedMovementDay:
+          type: integer
+          nullable: true
+        holders:
+          type: array
+          items:
+            type: string
+        authorizedSigners:
+          type: array
+          items:
+            type: string
+        freeTransactionsLimit:
+          type: integer
+        extraTransactionFee:
+          type: number
+        minimumDailyAverage:
+          type: number
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BalanceResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+        accountNumber:
+          type: string
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        currency:
+          type: string
+        availableBalance:
+          type: number
+        currentMonthlyMovements:
+          type: integer
+        maxMonthlyMovements:
+          type: integer
+          nullable: true
+        queriedAt:
+          type: string
+          format: date-time
+
+    BalanceUpdateRequest:
+      type: object
+      required:
+        - operationType
+        - amount
+      properties:
+        operationType:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL]
+        amount:
+          type: number
+          minimum: 0.01
+          example: 250.00
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
