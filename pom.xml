@@ -78,7 +78,13 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- 9. Testing (JUnit 5 + Reactor Test) -->
+		<!-- 9. HashiCorp Vault Integration for Secret Management -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-vault-config</artifactId>
+		</dependency>
+
+		<!-- 10. Testing (JUnit 5 + Reactor Test) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>

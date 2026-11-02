@@ -30,9 +30,6 @@ public class BankAccount {
     private Integer allowedMovementDay;
     private List<String> holders;
     private List<String> authorizedSigners;
-    private Integer freeTransactionsLimit;
-    private BigDecimal extraTransactionFee;
-    private BigDecimal minimumDailyAverage;
     private AccountStatus status;
     private Instant createdAt;
     private Instant updatedAt;
