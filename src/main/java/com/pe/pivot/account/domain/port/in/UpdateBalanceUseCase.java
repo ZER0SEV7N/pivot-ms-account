@@ -10,5 +10,5 @@ import java.math.BigDecimal;
  * Input Port for executing balance updates (deposits and withdrawals) from ms-transaction.
  */
 public interface UpdateBalanceUseCase {
-    Single<BankAccount> execute(String id, OperationType operationType, BigDecimal amount);
+    Single<BankAccount> updateBalance(String id, OperationType operationType, BigDecimal amount);
 }

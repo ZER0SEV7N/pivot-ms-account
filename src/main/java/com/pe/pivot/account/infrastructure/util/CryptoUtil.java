@@ -60,6 +60,26 @@ public final class CryptoUtil {
     }
 
     /**
+     * Encrypts sensitive plain text using AES-256 before storing in MongoDB.
+     *
+     * @param plainText - the sensitive data to encrypt
+     * @return - the AES-256 encrypted string
+     */
+    public String encryptAes256(String plainText) {
+        if (plainText == null) {
+            return null;
+        }
+        try {
+            Cipher cipher = Cipher.getInstance(AES_ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, this.secretKeySpec);
+            byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(encryptedBytes);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Error encrypting data with AES-256", ex);
+        }
+    }
+
+    /**
      * Decrypts a string encrypted with AES-256.
      *
      * @param cipherTest the encrypted string

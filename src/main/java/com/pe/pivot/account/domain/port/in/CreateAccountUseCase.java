@@ -7,5 +7,5 @@ import io.reactivex.rxjava3.core.Single;
  * Input Port for opening a new bank account.
  */
 public interface CreateAccountUseCase {
-    Single<BankAccount> execute(BankAccount account);
+    Single<BankAccount> create(BankAccount account);
 }

@@ -13,8 +13,8 @@ public interface AccountRepositoryPort {
     Single<BankAccount> save(BankAccount account);
     Flowable<BankAccount> findAll();
     Maybe<BankAccount> findById(String id);
-    Maybe<BankAccount> findByAccountNumberHash(String accountNumber);
-    Maybe<BankAccount> findByCustomerId(String customerId);
-    Single<Boolean> exitsByAccountNumberHash(String accountNumberHash);
+    Maybe<BankAccount> findByAccountNumberHash(String accountNumberHash);
+    Flowable<BankAccount> findByCustomerId(String customerId);
+    Single<Boolean> existsByAccountNumberHash(String accountNumberHash);
     Completable deleteById(String id);
 }
