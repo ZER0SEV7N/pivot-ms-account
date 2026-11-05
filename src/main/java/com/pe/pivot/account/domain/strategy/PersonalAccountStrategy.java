@@ -1,6 +1,7 @@
 package com.pe.pivot.account.domain.strategy;
 
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
+import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.AccountType;
 import com.pe.pivot.account.domain.model.BankAccount;
 import com.pe.pivot.account.domain.model.CustomerSummary;
@@ -37,35 +38,29 @@ public class PersonalAccountStrategy implements AccountValidationStrategy {
     public Completable validate(CustomerSummary customer, BankAccount newAccount, List<BankAccount> existingAccounts) {
         return Completable.fromAction(() -> {
 
-            // Validate that the customer is personal and active
-            if (!"PERSONAL".equals(customer.getCustomerType()) || !customer.isActive()) {
-                throw new BusinessRuleException("Only active personal customers can open new accounts.");
-            }
-
             // Validate account type rules for personal customers :
             // Personal Customer only have 1 Savings account, 1 Checking account, and multiple Fixed Term accounts.
             if (newAccount.getAccountType() == AccountType.SAVINGS) {
-                boolean hasSavings = existingAccounts.stream()
-                        .anyMatch(acc -> acc.getAccountType() == AccountType.SAVINGS);
-                if (hasSavings) {
-                    throw new BusinessRuleException("Personal customers can only own a maximum of one SAVINGS account.");
+                boolean hasActiveSavings = existingAccounts.stream()
+                        .anyMatch(acc -> acc.getAccountType() == AccountType.SAVINGS && acc.getStatus() != AccountStatus.CLOSED);
+                if (hasActiveSavings) {
+                    throw new BusinessRuleException("Personal customers can only own a maximum of one active SAVINGS account.");
                 }
             }
 
-            if(newAccount.getAccountType() == AccountType.CHECKING) {
-                boolean hasChecking = existingAccounts.stream()
-                        .anyMatch(acc -> acc.getAccountType() == AccountType.CHECKING);
-                if (hasChecking) {
-                    throw new BusinessRuleException("Personal customers can only own a maximum of one CHECKING account.");
+            // Validate account type rules for personal customers :
+            if (newAccount.getAccountType() == AccountType.CHECKING) {
+                boolean hasActiveChecking = existingAccounts.stream()
+                        .anyMatch(acc -> acc.getAccountType() == AccountType.CHECKING && acc.getStatus() != AccountStatus.CLOSED);
+                if (hasActiveChecking) {
+                    throw new BusinessRuleException("Personal customers can only own a maximum of one active CHECKING account.");
                 }
             }
 
-            if(newAccount.getAccountType() == AccountType.FIXED_TERM) {
-                if(newAccount.getAllowedMovementDay() == null || newAccount.getAllowedMovementDay() < 1 || newAccount.getAllowedMovementDay() > 31) {
+            // Validate allowedMovementDay for FIXED_TERM accounts
+            if (newAccount.getAccountType() == AccountType.FIXED_TERM && (newAccount.getAllowedMovementDay() == null || newAccount.getAllowedMovementDay() < 1  || newAccount.getAllowedMovementDay() > 31)) {
                     throw new BusinessRuleException("FIXED_TERM accounts require a valid allowedMovementDay between 1 and 31.");
                 }
-
-            }
         });
     }
 }

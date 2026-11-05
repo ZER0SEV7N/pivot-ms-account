@@ -3,7 +3,8 @@ info:
   title: Pivot Banking System - Account Microservice API
   description: |
     RESTful Reactive API for managing Passive Bank Products (Savings, Checking, and Fixed-Term Accounts).
-    Enforces customer eligibility rules via reactive communication with ms-customer.
+    Enforces customer eligibility rules via reactive communication with ms-customer, AES-256-GCM encryption at rest,
+    SHA-256 blind indexing, and logical Soft Delete / Reactivation state transitions.
   version: 1.0.0
 servers:
   - url: http://localhost:8082/api/v1
@@ -11,7 +12,7 @@ servers:
 
 tags:
   - name: Accounts
-    description: Operations for managing passive bank accounts and balances
+    description: Operations for managing passive bank accounts, balances, and lifecycle states
 
 paths:
   /accounts:
@@ -42,6 +43,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Referenced Customer ID does not exist in ms-customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate account number hash
           content:
             application/json:
               schema:
@@ -128,7 +135,10 @@ paths:
     delete:
       tags:
         - Accounts
-      summary: Delete a bank account by ID
+      summary: Soft delete (logically close) a bank account by ID
+      description: |
+        Transitions the bank account status to CLOSED if and only if its current balance is 0.00.
+        Preserves historical records for banking audit compliance.
       operationId: deleteAccount
       parameters:
         - name: id
@@ -138,7 +148,13 @@ paths:
             type: string
       responses:
         '204':
-          description: Bank account deleted successfully
+          description: Bank account logically closed (status set to CLOSED)
+        '400':
+          description: Account still has remaining balance > 0 or is already CLOSED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Bank account not found
           content:
@@ -150,7 +166,7 @@ paths:
     get:
       tags:
         - Accounts
-      summary: Get bank account by Account Number
+      summary: Get bank account by Account Number (via SHA-256 blind index)
       operationId: getAccountByNumber
       parameters:
         - name: accountNumber
@@ -262,6 +278,7 @@ components:
 
     AccountStatus:
       type: string
+      description: Lifecycle status of the bank account (CLOSED represents Soft Delete)
       enum:
         - ACTIVE
         - BLOCKED
@@ -299,42 +316,26 @@ components:
           type: number
           format: double
           minimum: 0.0
-          description: 0 for SAVINGS and FIXED_TERM; > 0 for standard CHECKING
           example: 0.00
         maxMonthlyMovements:
           type: integer
           minimum: 1
-          description: Applicable for SAVINGS (e.g., 5) and FIXED_TERM (1)
           example: 5
         allowedMovementDay:
           type: integer
           minimum: 1
           maximum: 31
-          description: Mandatory if accountType is FIXED_TERM (day of month 1-31)
           example: 15
         holders:
           type: array
-          description: List of holder names/documents (at least 1 required for BUSINESS CHECKING)
           items:
             type: string
-          example: ["Daniel Singer"]
+          example: ["71234567"]
         authorizedSigners:
           type: array
-          description: List of authorized signers (0 or more for BUSINESS CHECKING)
           items:
             type: string
           example: []
-        freeTransactionsLimit:
-          type: integer
-          default: 20
-        extraTransactionFee:
-          type: number
-          format: double
-          default: 2.50
-        minimumDailyAverage:
-          type: number
-          format: double
-          default: 0.00
         status:
           $ref: '#/components/schemas/AccountStatus'
 
@@ -344,6 +345,8 @@ components:
         id:
           type: string
         accountNumber:
+          type: string
+        accountNumberHash:
           type: string
         customerId:
           type: string
@@ -371,12 +374,6 @@ components:
           type: array
           items:
             type: string
-        freeTransactionsLimit:
-          type: integer
-        extraTransactionFee:
-          type: number
-        minimumDailyAverage:
-          type: number
         status:
           $ref: '#/components/schemas/AccountStatus'
         createdAt:

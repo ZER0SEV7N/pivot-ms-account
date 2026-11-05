@@ -154,17 +154,32 @@ public class AccountUseCaseImpl implements
   }
 
   /**
-   * Deletes a bank account by its ID.
+   * Logically closes (Soft Delete) a bank account by setting its status to CLOSED.
+   * Enforces the guard condition: [balance == 0].
    *
-   * @param id - the unique identifier of the bank account to delete
-   * @return - Completable indicating completion or error if the account does not exist
+   * @param id the unique identifier of the bank account to close
+   * @return Completable indicating completion or error if balance > 0
    */
   @Override
   public Completable delete(String id) {
-      log.debug("Deleting bank account with ID: {}", id);
-      return findById(id)
-              .flatMapCompletable(existing -> accountRepository.deleteById(existing.getId()))
-              .doOnComplete(() -> log.info("Bank account deleted successfully with ID: {}", id));
+    log.debug("Initiating soft delete (logical closure) for bank account ID: {}", id);
+    return findById(id)
+            .flatMapCompletable(existing -> {
+              if (existing.getStatus() == AccountStatus.CLOSED) {
+                return Completable.error(new BusinessRuleException(
+                        "Bank account is already CLOSED."));
+              }
+              BigDecimal currentBalance = Optional.ofNullable(existing.getBalance()).orElse(BigDecimal.ZERO);
+              if (currentBalance.compareTo(BigDecimal.ZERO) > 0) {
+                return Completable.error(new BusinessRuleException(
+                        "Cannot close a bank account with remaining balance (" + currentBalance
+                                + "). Please withdraw all funds first."));
+              }
+              existing.setStatus(AccountStatus.CLOSED);
+              existing.setUpdatedAt(Instant.now());
+              return accountRepository.save(existing).ignoreElement();
+            })
+            .doOnComplete(() -> log.info("Bank account logically closed (CLOSED) with ID: {}", id));
   }
 
   /**
@@ -192,9 +207,9 @@ public class AccountUseCaseImpl implements
   private Single<BankAccount> verifyUniquenessAndSave(BankAccount account) {
       return accountRepository.existsByAccountNumberHash(account.getAccountNumberHash())
               .flatMap(exists -> {
+                  // Guard condition: If a bank account with the same account number already exists, throw a DuplicateAccountException
                   if (Boolean.TRUE.equals(exists)) {
-                      return Single.error(new DuplicateAccountException(
-                              "A bank account with the specified account number already exists."));
+                      return Single.error(new DuplicateAccountException("A bank account with the specified account number already exists."));
                   }
                   return accountRepository.save(account);
               });
@@ -275,5 +290,4 @@ public class AccountUseCaseImpl implements
       Optional.ofNullable(incoming.getStatus()).ifPresent(existing::setStatus);
       existing.setUpdatedAt(Instant.now());
   }
-
 }

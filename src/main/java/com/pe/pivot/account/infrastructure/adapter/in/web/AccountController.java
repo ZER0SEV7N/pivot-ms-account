@@ -1,14 +1,11 @@
 package com.pe.pivot.account.infrastructure.adapter.in.web;
 
-import com.pe.pivot.account.domain.port.in.CreateAccountUseCase;
-import com.pe.pivot.account.domain.port.in.DeleteAccountUseCase;
-import com.pe.pivot.account.domain.port.in.RetrieveAccountUseCase;
-import com.pe.pivot.account.domain.port.in.UpdateAccountUseCase;
-import com.pe.pivot.account.domain.port.in.UpdateBalanceUseCase;
+import com.pe.pivot.account.domain.port.in.*;
 import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountRequest;
 import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountResponse;
 import com.pe.pivot.account.infrastructure.adapter.in.web.dto.BalanceUpdateRequest;
 import com.pe.pivot.account.infrastructure.adapter.in.web.mapper.AccountWebMapper;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.validation.Valid;
@@ -96,6 +93,20 @@ public class AccountController {
   }
 
   /**
+   * Updates a bank account by its unique identifier.
+   * @Put - /api/v1/accounts/{id}
+   * @param id - the unique identifier of the bank account
+   * @param request - the AccountRequest containing the updated account information
+   * @return - Single emitting a ResponseEntity containing the AccountResponse with HTTP status 200 (OK)
+   */
+  @PutMapping("/{id}")
+  public Single<ResponseEntity<AccountResponse>> updateAccount(@PathVariable String id, @Valid @RequestBody AccountRequest request) {
+      return updateAccountUseCase.updateAccount(id, mapper.toDomain(request))
+              .map(mapper::toResponse)
+              .map(ResponseEntity::ok);
+  }
+
+  /**
    * Updates the balance of a bank account based on the provided BalanceUpdateRequest.
    * @Patch - /api/v1/accounts/{id}/balance
    * @param id - the unique identifier of the bank account
@@ -107,5 +118,17 @@ public class AccountController {
       return updateBalanceUseCase.updateBalance(id, request.operationType(), request.amount())
               .map(mapper::toResponse)
               .map(ResponseEntity::ok);
+  }
+
+  /**
+   * Deletes a bank account by its unique identifier.
+   * @Delete - /api/v1/accounts/{id}
+   * @param id - the unique identifier of the bank account
+   * @return - Completable completing with HTTP status 204 (No Content) if successful
+   */
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public Completable deleteAccount(@PathVariable String id) {
+    return deleteAccountUseCase.delete(id);
   }
 }
