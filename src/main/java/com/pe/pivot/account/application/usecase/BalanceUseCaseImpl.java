@@ -1,13 +1,13 @@
 // src/main/java/com/pe/pivot/account/application/usecase/BalanceUseCaseImpl.java
 package com.pe.pivot.account.application.usecase;
 
-import com.pe.pivot.account.domain.exception.AccountNotFoundException;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.AccountType;
 import com.pe.pivot.account.domain.model.BankAccount;
 import com.pe.pivot.account.domain.model.OperationType;
 import com.pe.pivot.account.domain.port.in.UpdateBalanceUseCase;
+import com.pe.pivot.account.domain.port.in.FindAccountByIdUseCase;
 import com.pe.pivot.account.domain.port.out.AccountRepositoryPort;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,7 @@ import java.util.Optional;
 public class BalanceUseCaseImpl implements UpdateBalanceUseCase {
 
     private final AccountRepositoryPort accountRepository;
+    private final FindAccountByIdUseCase findAccountByIdUseCase;
 
     /**
      * Updates the balance of a bank account based on the operation type (deposit or withdrawal).
@@ -43,8 +44,7 @@ public class BalanceUseCaseImpl implements UpdateBalanceUseCase {
     public Single<BankAccount> updateBalance(String id, OperationType operationType, BigDecimal amount) {
         log.debug("Processing balance update for accountId: {}, operation: {}, amount: {}", id, operationType, amount);
 
-        return accountRepository.findById(id)
-                .switchIfEmpty(Single.error(new AccountNotFoundException("Bank account not found with ID: " + id)))
+        return findAccountByIdUseCase.findById(id)
                 .flatMap(account -> {
                     // Validate account status
                     if (account.getStatus() != AccountStatus.ACTIVE) {

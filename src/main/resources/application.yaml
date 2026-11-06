@@ -3,5 +3,16 @@ spring:
     name: ms-account
   config:
     import:
+      - "optional:file:.env[.properties]"
+      - "optional:file:ms-account/.env[.properties]"
       - "optional:configserver:http://localhost:8888"
       - "optional:vault://"
+  cloud:
+    vault:
+      uri: ${VAULT_URI:http://127.0.0.1:8200}
+      authentication: TOKEN
+      token: ${VAULT_TOKEN}
+      kv:
+        enabled: true
+        backend: secret
+        default-context: pivot-bank

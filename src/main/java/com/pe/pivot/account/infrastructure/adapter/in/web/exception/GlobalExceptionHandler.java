@@ -4,12 +4,12 @@ import com.pe.pivot.account.domain.exception.AccountNotFoundException;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
 import com.pe.pivot.account.domain.exception.DuplicateAccountException;
+import com.pe.pivot.account.infrastructure.adapter.in.web.dto.ErrorResponse;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({AccountNotFoundException.class, CustomerNotFoundException.class})
     public Single<ResponseEntity<ErrorResponse>> handleNotFound(RuntimeException ex, ServerWebExchange exchange) {
         log.warn("Resource not found: {}", ex.getMessage());
-        return Single.just(buildResponse(ex, HttpStatus.NOT_FOUND, ex.getMessage(), exchange));
+        return Single.just(buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), exchange));
     }
 
     /**
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateAccountException.class)
     public Single<ResponseEntity<ErrorResponse>> handleDuplicate(DuplicateAccountException ex, ServerWebExchange exchange) {
         log.warn("Conflict error: {}", ex.getMessage());
-        return Single.just(buildResponse(ex, HttpStatus.CONFLICT, ex.getMessage(), exchange));
+        return Single.just(buildResponse(HttpStatus.CONFLICT, ex.getMessage(), exchange));
     }
 
     /**
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessRuleException.class)
     public Single<ResponseEntity<ErrorResponse>> handleBusinessRule(BusinessRuleException ex, ServerWebExchange exchange) {
         log.warn("Business rule violation: {}", ex.getMessage());
-        return Single.just(buildResponse(ex, HttpStatus.BAD_REQUEST, ex.getMessage(), exchange));
+        return Single.just(buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), exchange));
     }
 
     /**
@@ -82,7 +82,7 @@ public class GlobalExceptionHandler {
                 .map(DefaultMessageSourceResolvable::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         log.warn("Payload validation error: {}", errors);
-        return Single.just(buildResponse(ex, HttpStatus.BAD_REQUEST, errors, exchange));
+        return Single.just(buildResponse(HttpStatus.BAD_REQUEST, errors, exchange));
     }
 
     /**
@@ -96,26 +96,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Single<ResponseEntity<ErrorResponse>> handleGenericException(Exception ex, ServerWebExchange exchange) {
         log.error("Unexpected error occurred: ", ex);
-        return Single.just(buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR,
+        return Single.just(buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected internal server error occurred.", exchange));
     }
 
     /**
      * Builds a standardized ErrorResponse and wraps it in a ResponseEntity.
      *
-     * @param ex - the exception to attach to the ErrorResponse
      * @param status - the HTTP status to be returned
      * @param message - the error message to be included in the response
      * @param exchange - the current server web exchange, used to extract the request path
      * @return - ResponseEntity containing the ErrorResponse with the specified HTTP status
      */
-    private ResponseEntity<ErrorResponse> buildResponse(Throwable ex, HttpStatus status, String message,
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message,
                                                        ServerWebExchange exchange) {
-        ErrorResponse errorResponse = ErrorResponse.builder(ex, status, message)
-                .title(status.getReasonPhrase())
-                .property("timestamp", Instant.now())
-                .property("error", status.getReasonPhrase())
-                .property("path", exchange.getRequest().getPath().value())
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(message)
+                .path(exchange.getRequest().getPath().value())
                 .build();
         return ResponseEntity.status(status).body(errorResponse);
     }

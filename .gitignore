@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local Environment & Secrets ###
+.env
+*.env
+
+*.bkp
+.$ms-account Diagrams.drawio.bkp

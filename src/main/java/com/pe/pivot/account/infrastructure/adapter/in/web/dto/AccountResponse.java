@@ -9,13 +9,13 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Immutable Response DTO using Java 17 Record representing a bank account (Part I).
+ * Immutable Response DTO representing a bank account.
+ * Note: accountNumberHash is strictly internal to MongoDB and never exposed via API.
  */
 @Builder
 public record AccountResponse(
         String id,
         String accountNumber,
-        String accountNumberHash,
         String customerId,
         AccountType accountType,
         String currency,

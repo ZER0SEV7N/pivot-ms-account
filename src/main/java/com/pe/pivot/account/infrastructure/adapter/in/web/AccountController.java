@@ -3,6 +3,7 @@ package com.pe.pivot.account.infrastructure.adapter.in.web;
 import com.pe.pivot.account.domain.port.in.*;
 import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountRequest;
 import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.dto.BalanceResponse;
 import com.pe.pivot.account.infrastructure.adapter.in.web.dto.BalanceUpdateRequest;
 import com.pe.pivot.account.infrastructure.adapter.in.web.mapper.AccountWebMapper;
 import io.reactivex.rxjava3.core.Completable;
@@ -39,7 +40,7 @@ public class AccountController {
   @ResponseStatus(HttpStatus.CREATED)
   public Single<ResponseEntity<AccountResponse>> createAccount(@Valid @RequestBody AccountRequest request) {
       return createAccountUseCase.create(mapper.toDomain(request))
-              .map(mapper::toResponse)
+              .map(mapper::toUnmaskedResponse)
               .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
   }
 
@@ -118,6 +119,19 @@ public class AccountController {
       return updateBalanceUseCase.updateBalance(id, request.operationType(), request.amount())
               .map(mapper::toResponse)
               .map(ResponseEntity::ok);
+  }
+
+  /**
+   * Consults the available balance of a bank account.
+   *
+   * @Get /api/v1/accounts/{id}/balance
+   * @param id - the unique identifier of the bank account
+   * @return - Single emitting a BalanceResponse with the available balance
+   */
+  @GetMapping("/{id}/balance")
+  public Single<BalanceResponse> getAccountBalance(@PathVariable String id) {
+    return retrieveAccountUseCase.findById(id)
+            .map(mapper::toBalanceResponse);
   }
 
   /**
