@@ -291,51 +291,60 @@ components:
         - customerId
         - accountType
         - currency
-        - balance
       properties:
         accountNumber:
           type: string
-          description: Optional on creation (auto-generated if omitted)
-          example: "191-12345678-0-01"
         customerId:
           type: string
-          description: Primary owner Customer ID from ms-customer
-          example: "671e9b4a8f1b2c3d4e5f6a7b"
         accountType:
           $ref: '#/components/schemas/AccountType'
         currency:
           type: string
-          enum: [PEN, USD]
+          enum: [ PEN, USD ]
           default: PEN
         balance:
           type: number
           format: double
-          minimum: 0.0
-          example: 1500.00
+          minimum: 0.00
+          default: 0.00
         maintenanceFee:
           type: number
           format: double
-          minimum: 0.0
-          example: 0.00
+          minimum: 0.00
+        minimumDailyAverage:
+          type: number
+          format: double
+          minimum: 0.00
+          description: Required minimum daily average balance for VIP Savings accounts
+        minOpeningAmount:
+          type: number
+          format: double
+          minimum: 0.00
+          description: Minimum amount required to open the account
         maxMonthlyMovements:
           type: integer
           minimum: 1
-          example: 5
+        maxFreeMonthlyTransactions:
+          type: integer
+          minimum: 0
+          description: Maximum number of commission-free transactions per month
+        transactionCommissionFee:
+          type: number
+          format: double
+          minimum: 0.00
+          description: Commission fee charged per transaction once maxFreeMonthlyTransactions is exceeded
         allowedMovementDay:
           type: integer
           minimum: 1
           maximum: 31
-          example: 15
         holders:
           type: array
           items:
             type: string
-          example: ["71234567"]
         authorizedSigners:
           type: array
           items:
             type: string
-          example: []
         status:
           $ref: '#/components/schemas/AccountStatus'
 
@@ -346,8 +355,6 @@ components:
           type: string
         accountNumber:
           type: string
-        accountNumberHash:
-          type: string
         customerId:
           type: string
         accountType:
@@ -358,9 +365,20 @@ components:
           type: number
         maintenanceFee:
           type: number
+        minimumDailyAverage:
+          type: number
+        minOpeningAmount:
+          type: number
         maxMonthlyMovements:
           type: integer
           nullable: true
+        maxFreeMonthlyTransactions:
+          type: integer
+        transactionCommissionFee:
+          type: number
+        lastAppliedCommission:
+          type: number
+          description: Commission fee applied in the most recent balance operation (0.00 if within free limit)
         currentMonthlyMovements:
           type: integer
         allowedMovementDay:

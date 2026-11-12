@@ -25,4 +25,11 @@ public class CustomerSummary {
     public boolean isPersonal() { return "PERSONAL".equalsIgnoreCase(this.customerType); }
     public boolean isBusiness() { return "BUSINESS".equalsIgnoreCase(this.customerType); }
     public boolean isActive() { return "ACTIVE".equalsIgnoreCase(this.status); }
+
+    /**
+     * Checks if the customer has a VIP or PYME profile.
+     * @return - true if the customer has a VIP or PYME profile, false otherwise.
+     */
+    public boolean isVip() { return "VIP".equalsIgnoreCase(this.profile); }
+    public boolean isPyme() { return "PYME".equalsIgnoreCase(this.profile); }
 }

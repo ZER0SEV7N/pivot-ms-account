@@ -1,6 +1,10 @@
 package com.pe.pivot.account.domain.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,7 +29,12 @@ public class BankAccount {
     private String currency;
     private BigDecimal balance;
     private BigDecimal maintenanceFee;
+    private BigDecimal minimumDailyAverage;
+    private BigDecimal minOpeningAmount;
     private Integer maxMonthlyMovements;
+    private Integer maxFreeMonthlyTransactions;
+    private BigDecimal transactionCommissionFee;
+    private BigDecimal lastAppliedCommission;
     private Integer currentMonthlyMovements;
     private Integer allowedMovementDay;
     private List<String> holders;
@@ -33,4 +42,22 @@ public class BankAccount {
     private AccountStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+
+    public boolean canBeClosed() {
+        return this.balance == null || this.balance.compareTo(BigDecimal.ZERO) == 0;
+    }
+
+    /**
+     * Checks if the bank account has
+     * free transactions available for the current month.
+     *
+     * @return - true if free transactions are available, false otherwise.
+     */
+    public boolean isFreeTransactionAvailable() {
+        if (this.maxFreeMonthlyTransactions == null) {
+            return true;
+        }
+        int current = this.currentMonthlyMovements != null ? this.currentMonthlyMovements : 0;
+        return current < this.maxFreeMonthlyTransactions;
+    }
 }

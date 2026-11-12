@@ -27,40 +27,63 @@ public class PersonalAccountStrategy implements AccountValidationStrategy {
     }
 
     /**
-     * Validates the new account against personal customer rules and existing customer accounts.
+     * Validates the new account against customer rules and existing customer accounts.
      *
      * @param customer - The customer summary information.
      * @param newAccount - account being created
      * @param existingAccounts - list of accounts alredy owned by the customer
+     * @param hasActiveCreditCard - indicates if the customer has an active credit card
      * @return - Completable completing if valid or emitting BusinessRuleException
      */
     @Override
-    public Completable validate(CustomerSummary customer, BankAccount newAccount, List<BankAccount> existingAccounts) {
+    public Completable validate(
+            CustomerSummary customer,
+            BankAccount newAccount,
+            List<BankAccount> existingAccounts,
+            boolean hasActiveCreditCard) {
+
+        // Validate that the customer does not already own
+        // an active account of the same type (SAVINGS or CHECKING)
         return Completable.fromAction(() -> {
-
-            // Validate account type rules for personal customers :
-            // Personal Customer only have 1 Savings account, 1 Checking account, and multiple Fixed Term accounts.
-            if (newAccount.getAccountType() == AccountType.SAVINGS) {
-                boolean hasActiveSavings = existingAccounts.stream()
-                        .anyMatch(acc -> acc.getAccountType() == AccountType.SAVINGS && acc.getStatus() != AccountStatus.CLOSED);
-                if (hasActiveSavings) {
-                    throw new BusinessRuleException("Personal customers can only own a maximum of one active SAVINGS account.");
-                }
-            }
-
-            // Validate account type rules for personal customers :
-            if (newAccount.getAccountType() == AccountType.CHECKING) {
-                boolean hasActiveChecking = existingAccounts.stream()
-                        .anyMatch(acc -> acc.getAccountType() == AccountType.CHECKING && acc.getStatus() != AccountStatus.CLOSED);
-                if (hasActiveChecking) {
-                    throw new BusinessRuleException("Personal customers can only own a maximum of one active CHECKING account.");
-                }
-            }
-
-            // Validate allowedMovementDay for FIXED_TERM accounts
-            if (newAccount.getAccountType() == AccountType.FIXED_TERM && (newAccount.getAllowedMovementDay() == null || newAccount.getAllowedMovementDay() < 1  || newAccount.getAllowedMovementDay() > 31)) {
-                    throw new BusinessRuleException("FIXED_TERM accounts require a valid allowedMovementDay between 1 and 31.");
-                }
+            validateSingleAccountOwnership(newAccount.getAccountType(), existingAccounts);
+            validateVipProfileRequirements(customer, newAccount, hasActiveCreditCard);
         });
+    }
+
+    /**
+     * Validates that the customer does not already own an
+     * active account of the same type (SAVINGS or CHECKING).
+     *
+     * @param newType - The type of the new account being created.
+     * @param existingAccounts - List of existing accounts owned by the customer.
+     * @throws BusinessRuleException if the customer already owns an active account of the same type.
+     */
+    private void validateSingleAccountOwnership(AccountType newType, List<BankAccount> existingAccounts) {
+        // Personal customers can only own a maximum of one active SAVINGS or CHECKING account.
+        if (newType == AccountType.SAVINGS || newType == AccountType.CHECKING) {
+            boolean alreadyOwnsType = existingAccounts.stream().anyMatch(acc -> acc.getAccountType() == newType && acc.getStatus() != AccountStatus.CLOSED);
+            // If the customer already owns an active account of the same type, throw a BusinessRuleException.
+            if (alreadyOwnsType) {
+                throw new BusinessRuleException("Personal customers can only own a maximum of one active " + newType + " account.");
+            }
+        }
+    }
+
+    /**
+     * Validates that VIP Personal customers must hold an
+     * active Credit Card with the bank to open a VIP SAVINGS account.
+     *
+     * @param customer - The customer summary information.
+     * @param newAccount - account being created
+     * @param hasActiveCreditCard - indicates if the customer has an active credit card
+     * @throws BusinessRuleException if the VIP Personal customer does not
+     * hold an active Credit Card when trying to open a VIP SAVINGS account.
+     */
+    private void validateVipProfileRequirements(
+            CustomerSummary customer, BankAccount newAccount, boolean hasActiveCreditCard) {
+        // If the customer has a VIP profile and is trying to open a SAVINGS account,
+        if (customer.isVip() && newAccount.getAccountType() == AccountType.SAVINGS && !hasActiveCreditCard) {
+            throw new BusinessRuleException("VIP Personal customers must hold an active Credit Card with the bank to open a VIP SAVINGS account.");
+        }
     }
 }

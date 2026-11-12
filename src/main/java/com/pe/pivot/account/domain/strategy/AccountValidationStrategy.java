@@ -26,7 +26,11 @@ public interface AccountValidationStrategy {
      * @param customer - The customer summary information.
      * @param newAccount - account being created
      * @param existingAccounts - list of accounts alredy owned by the customer
+     * @param hasActiveCreditCard - indicates if the customer has an active credit card
      * @return Completable completing if valid or emitting BusinessRuleException
      */
-    Completable validate(CustomerSummary customer, BankAccount newAccount, List<BankAccount> existingAccounts);
+    Completable validate(CustomerSummary customer,
+                         BankAccount newAccount,
+                         List<BankAccount> existingAccounts,
+                         boolean hasActiveCreditCard);
 }
