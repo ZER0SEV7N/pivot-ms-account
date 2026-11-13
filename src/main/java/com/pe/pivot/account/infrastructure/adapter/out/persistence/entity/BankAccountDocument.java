@@ -36,7 +36,12 @@ public class BankAccountDocument {
     private String currency;
     private BigDecimal balance;
     private BigDecimal maintenanceFee;
+    private BigDecimal minimumDailyAverage;
+    private BigDecimal minOpeningAmount;
     private Integer maxMonthlyMovements;
+    private Integer maxFreeMonthlyTransactions;
+    private BigDecimal transactionCommissionFee;
+    private BigDecimal lastAppliedCommission;
     private Integer currentMonthlyMovements;
     private Integer allowedMovementDay;
     private List<String> holders;

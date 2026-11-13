@@ -25,7 +25,11 @@ public class AccountWebMapper {
                 .currency(request.currency())
                 .balance(request.balance())
                 .maintenanceFee(request.maintenanceFee())
+                .minimumDailyAverage(request.minimumDailyAverage())
+                .minOpeningAmount(request.minOpeningAmount())
                 .maxMonthlyMovements(request.maxMonthlyMovements())
+                .maxFreeMonthlyTransactions(request.maxFreeMonthlyTransactions())
+                .transactionCommissionFee(request.transactionCommissionFee())
                 .allowedMovementDay(request.allowedMovementDay())
                 .holders(request.holders())
                 .authorizedSigners(request.authorizedSigners())
@@ -33,16 +37,10 @@ public class AccountWebMapper {
                 .build();
     }
 
-    /**
-     * Used ONLY during account creation (POST) so the client receives the generated account number once.
-     */
     public AccountResponse toUnmaskedResponse(BankAccount domain) {
         return buildAccountResponse(domain, domain.getAccountNumber());
     }
 
-    /**
-     * Used for all GET, PUT, and PATCH operations, returning the masked account number (****0-01).
-     */
     public AccountResponse toResponse(BankAccount domain) {
         return buildAccountResponse(domain, DataMaskingUtil.maskAccountNumber(domain.getAccountNumber()));
     }
@@ -69,7 +67,12 @@ public class AccountWebMapper {
                 .currency(domain.getCurrency())
                 .balance(domain.getBalance())
                 .maintenanceFee(domain.getMaintenanceFee())
+                .minimumDailyAverage(domain.getMinimumDailyAverage())
+                .minOpeningAmount(domain.getMinOpeningAmount())
                 .maxMonthlyMovements(domain.getMaxMonthlyMovements())
+                .maxFreeMonthlyTransactions(domain.getMaxFreeMonthlyTransactions())
+                .transactionCommissionFee(domain.getTransactionCommissionFee())
+                .lastAppliedCommission(domain.getLastAppliedCommission())
                 .currentMonthlyMovements(domain.getCurrentMonthlyMovements())
                 .allowedMovementDay(domain.getAllowedMovementDay())
                 .holders(domain.getHolders())

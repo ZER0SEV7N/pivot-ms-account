@@ -17,6 +17,12 @@ public class AccountPersistenceMapper {
 
     private final CryptoUtil cryptoUtil;
 
+    /**
+     * Maps a BankAccount domain object to a BankAccountDocument for persistence in MongoDB.
+     *
+     * @param domain - The BankAccount domain object to be converted.
+     * @return - The corresponding BankAccountDocument for MongoDB storage.
+     */
     public BankAccountDocument toDocument(BankAccount domain) {
         return BankAccountDocument.builder()
                 .id(domain.getId())
@@ -27,7 +33,12 @@ public class AccountPersistenceMapper {
                 .currency(domain.getCurrency())
                 .balance(domain.getBalance())
                 .maintenanceFee(domain.getMaintenanceFee())
+                .minimumDailyAverage(domain.getMinimumDailyAverage())
+                .minOpeningAmount(domain.getMinOpeningAmount())
                 .maxMonthlyMovements(domain.getMaxMonthlyMovements())
+                .maxFreeMonthlyTransactions(domain.getMaxFreeMonthlyTransactions())
+                .transactionCommissionFee(domain.getTransactionCommissionFee())
+                .lastAppliedCommission(domain.getLastAppliedCommission())
                 .currentMonthlyMovements(domain.getCurrentMonthlyMovements())
                 .allowedMovementDay(domain.getAllowedMovementDay())
                 .holders(domain.getHolders())
@@ -38,6 +49,12 @@ public class AccountPersistenceMapper {
                 .build();
     }
 
+    /**
+     * Maps a BankAccountDocument from MongoDB to a BankAccount domain object.
+     *
+     * @param doc - The BankAccountDocument retrieved from MongoDB.
+     * @return - The corresponding BankAccount domain object.
+     */
     public BankAccount toDomain(BankAccountDocument doc) {
         return BankAccount.builder()
                 .id(doc.getId())
@@ -48,7 +65,12 @@ public class AccountPersistenceMapper {
                 .currency(doc.getCurrency())
                 .balance(doc.getBalance())
                 .maintenanceFee(doc.getMaintenanceFee())
+                .minimumDailyAverage(doc.getMinimumDailyAverage())
+                .minOpeningAmount(doc.getMinOpeningAmount())
                 .maxMonthlyMovements(doc.getMaxMonthlyMovements())
+                .maxFreeMonthlyTransactions(doc.getMaxFreeMonthlyTransactions())
+                .transactionCommissionFee(doc.getTransactionCommissionFee())
+                .lastAppliedCommission(doc.getLastAppliedCommission())
                 .currentMonthlyMovements(doc.getCurrentMonthlyMovements())
                 .allowedMovementDay(doc.getAllowedMovementDay())
                 .holders(doc.getHolders())

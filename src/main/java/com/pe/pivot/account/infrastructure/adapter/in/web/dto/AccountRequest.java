@@ -24,18 +24,29 @@ public record AccountRequest(
         @NotBlank(message = "currency is required")
         String currency,
 
-        @NotNull(message = "balance is required")
-        @PositiveOrZero(message = "balance must be zero or positive")
+        @PositiveOrZero(message = "Initial balance must be zero or positive")
         BigDecimal balance,
 
-        @PositiveOrZero(message = "maintenanceFee must be zero or positive")
+        @PositiveOrZero(message = "Maintenance fee must be zero or positive")
         BigDecimal maintenanceFee,
 
-        @Min(value = 1, message = "maxMonthlyMovements must be at least 1")
+        @PositiveOrZero(message = "Minimum daily average must be zero or positive")
+        BigDecimal minimumDailyAverage,
+
+        @PositiveOrZero(message = "Minimum opening amount must be zero or positive")
+        BigDecimal minOpeningAmount,
+
+        @Positive(message = "Max monthly movements must be at least 1")
         Integer maxMonthlyMovements,
 
-        @Min(value = 1, message = "allowedMovementDay must be between 1 and 31")
-        @Max(value = 31, message = "allowedMovementDay must be between 1 and 31")
+        @PositiveOrZero(message = "Max free monthly transactions must be zero or positive")
+        Integer maxFreeMonthlyTransactions,
+
+        @PositiveOrZero(message = "Transaction commission fee must be zero or positive")
+        BigDecimal transactionCommissionFee,
+
+        @Min(value = 1, message = "Allowed movement day must be between 1 and 31")
+        @Max(value = 31, message = "Allowed movement day must be between 1 and 31")
         Integer allowedMovementDay,
 
         List<String> holders,

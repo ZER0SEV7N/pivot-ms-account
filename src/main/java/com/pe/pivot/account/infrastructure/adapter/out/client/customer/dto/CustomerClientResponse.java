@@ -1,4 +1,4 @@
-package com.pe.pivot.account.infrastructure.adapter.out.client.dto;
+package com.pe.pivot.account.infrastructure.adapter.out.client.customer.dto;
 
 import lombok.Builder;
 

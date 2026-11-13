@@ -11,13 +11,35 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-     @Value("${application.clients.customer-service.url:http://localhost:8081/api/v1/customers}")
-     private String customerServiceUrl;
+  // Base URL for the customer service, injected from application properties or defaulting to localhost.
+  @Value("${application.clients.customer-service.url:http://localhost:8081/api/v1/customers}")
+  private String customerServiceUrl;
 
-     @Bean
-     public WebClient customerWebClient() {
-          return WebClient.builder()
-                  .baseUrl(customerServiceUrl)
-                  .build();
-     }
+  // Value = "${application.clients.credit-service.url:http://localhost:8083/api/v1/credits}"
+  @Value("${application.clients.credit-service.url:http://localhost:8083/api/v1/credits}")
+  private String creditServiceUrl;
+
+  /**
+   * Creates a WebClient bean for communicating with the customer service.
+   *
+   * @return - A configured WebClient instance for the customer service.
+   */
+  @Bean
+  public WebClient customerWebClient() {
+    return WebClient.builder()
+            .baseUrl(customerServiceUrl)
+            .build();
+  }
+
+  /**
+   * Creates a WebClient bean for communicating with the credit service.
+   *
+   * @return - A configured WebClient instance for the credit service.
+   */
+  @Bean
+  public WebClient creditWebClient() {
+    return WebClient.builder()
+            .baseUrl(creditServiceUrl)
+            .build();
+  }
 }

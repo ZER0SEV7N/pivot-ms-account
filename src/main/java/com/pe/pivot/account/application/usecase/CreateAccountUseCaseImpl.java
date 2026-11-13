@@ -3,16 +3,13 @@ package com.pe.pivot.account.application.usecase;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
 import com.pe.pivot.account.domain.exception.DuplicateAccountException;
-import com.pe.pivot.account.domain.model.AccountStatus;
-import com.pe.pivot.account.domain.model.AccountType;
 import com.pe.pivot.account.domain.model.BankAccount;
 import com.pe.pivot.account.domain.model.CustomerSummary;
 import com.pe.pivot.account.domain.port.in.CreateAccountUseCase;
 import com.pe.pivot.account.domain.port.out.AccountRepositoryPort;
+import com.pe.pivot.account.domain.port.out.CreditClientPort;
 import com.pe.pivot.account.domain.port.out.CustomerClientPort;
 import com.pe.pivot.account.domain.strategy.AccountValidationStrategy;
-import com.pe.pivot.account.infrastructure.config.AccountRulesProperties;
-import com.pe.pivot.account.infrastructure.util.CryptoUtil;
 import com.pe.pivot.account.infrastructure.util.DataMaskingUtil;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -20,17 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Application Service responsible only for opening new bank accounts.
- * It verifies the customer, applies account validation strategies, configures
- * product defaults, checks account-number uniqueness, and persists the account.
+ * Single Responsibility Use Case for creating passive bank accounts with Phase II VIP/PYME rules.
+ * It ensures that the customer is active, validates account creation rules based on customer type,
+ * and initializes the account with default parameters, cryptographic blind-index hashes, and product-type financial rules.
  */
 @Slf4j
 @Service
@@ -39,135 +31,93 @@ public class CreateAccountUseCaseImpl implements CreateAccountUseCase {
 
     private final AccountRepositoryPort accountRepository;
     private final CustomerClientPort customerClient;
+    private final CreditClientPort creditClient;
     private final List<AccountValidationStrategy> validationStrategies;
-    private final AccountRulesProperties rulesProperties;
-    private final CryptoUtil cryptoUtil;
+    private final AccountDomainInitializer accountInitializer;
 
     /**
-     * Opens a new bank account after verifying the customer in ms-customer and evaluating strategies.
+     * Creates a new bank account for a customer after performing all necessary validations and initializations.
+     * It ensures the customer is active, validates the account creation rules, and initializes the account.
+     * Use AccountDomainInitializer to set default parameters, cryptographic blind-index hashes, and product-type financial rules.
      *
-     * @param account domain account to create
-     * @return Single emitting the created BankAccount
+     * @param account - The bank account to be created.
+     * @return - Single emitting the created BankAccount or an error if validation fails.
      */
     @Override
     public Single<BankAccount> create(BankAccount account) {
-        // Log the initiation of the account opening process
-        log.debug("Initiating account opening for customerId: {} and type: {}",
-                account.getCustomerId(), account.getAccountType());
+        // Log the initiation of account creation for traceability and debugging.
+        log.debug("Initiating account creation for customerId: {} and type: {}", account.getCustomerId(), account.getAccountType());
 
-        // Verify the customer exists and is active in ms-customer
-        return customerClient.findCustomerById(account.getCustomerId())
-                .switchIfEmpty(Single.error(new CustomerNotFoundException(
-                        "Customer not found in ms-customer with ID: " + account.getCustomerId())))
-                .flatMap(customer -> {
-                    if (!customer.isActive()) {
-                        return Single.error(new BusinessRuleException(
-                                "Cannot open a bank account for an inactive or blocked customer."));
-                    }
-
-                    // Retrieve existing accounts for the customer to apply validation strategies
-                    return accountRepository.findByCustomerId(customer.getId())
-                            .toList()
-                            .flatMap(existingAccounts -> applyStrategy(customer, account, existingAccounts)
-                                    .andThen(Single.defer(() -> {
-                                        configureProductDefaults(account, customer);
-                                        return verifyUniquenessAndSave(account);
-                                    })));
-                })
-                .doOnSuccess(saved -> log.info(
-                        "Bank account created successfully. ID: {}, MaskedNumber: {}",
+        // Fetch the customer summary from the ms-customer service and ensure the customer is active.
+        return fetchActiveCustomer(account.getCustomerId())
+                // Validate the new account against customer rules and existing accounts using the appropriate strategy.
+                .flatMap(customer -> Single.zip(
+                        accountRepository.findByCustomerId(customer.getId()).toList(), checkCreditCardIfRequired(customer),
+                        (existingAccounts, hasCard) -> validateWithStrategy(customer, account, existingAccounts, hasCard)
+                                .andThen(Single.defer(() -> {
+                                    accountInitializer.initializeAndValidate(customer, account);
+                                    return saveUniqueAccount(account);
+                                }))
+                ).flatMap(single -> single))
+                .doOnSuccess(saved -> log.info("Account created successfully. ID: {}, MaskedNumber: {}",
                         saved.getId(), DataMaskingUtil.maskAccountNumber(saved.getAccountNumber())));
     }
 
     /**
-     * Applies the validation strategies to the new account and existing accounts.
+     * Fetches the customer summary from the ms-customer service and ensures the customer is active.
      *
-     * @param customer the customer summary
-     * @param newAccount the new bank account to validate
-     * @param existingAccounts the list of existing bank accounts
-     * @return Completable indicating completion or error if validation fails
+     * @param customerId - The unique identifier of the customer.
+     * @return - Single emitting the CustomerSummary if found and active, or an error if not found or inactive.
      */
-    private Completable applyStrategy(CustomerSummary customer, BankAccount newAccount,
-                                      List<BankAccount> existingAccounts) {
+    private Single<CustomerSummary> fetchActiveCustomer(String customerId) {
+        return customerClient.findCustomerById(customerId)
+                .switchIfEmpty(Single.error(new CustomerNotFoundException("Customer not found in ms-customer with ID: " + customerId)))
+                // Validate that the customer is active before proceeding with account creation.
+                .flatMap(customer -> customer.isActive()
+                        ? Single.just(customer)
+                        : Single.error(new BusinessRuleException("Cannot open a bank account for an inactive or blocked customer.")));
+    }
+
+    /**
+     * Checks if the customer has an active credit card if required by their profile (VIP or PYME).
+     *
+     * @param customer - The customer summary information.
+     * @return - Single emitting true if the customer has an active credit card, false otherwise.
+     */
+    private Single<Boolean> checkCreditCardIfRequired(CustomerSummary customer) {
+        return (customer.isVip() || customer.isPyme())
+                ? creditClient.hasActiveCreditCard(customer.getId())
+                : Single.just(false);
+    }
+
+    /**
+     * Validates the new account against customer rules and existing customer accounts using the appropriate strategy.
+     *
+     * @param customer - The customer summary information.
+     * @param account - The bank account to be created.
+     * @param existing - List of existing accounts already owned by the customer.
+     * @param hasCard - Indicates if the customer has an active credit card.
+     * @return - Completable completing if valid or emitting BusinessRuleException if validation fails.
+     */
+    private Completable validateWithStrategy(CustomerSummary customer, BankAccount account, List<BankAccount> existing, boolean hasCard) {
+        // Find the appropriate validation strategy based on the customer type and apply it to validate the new account.
         return validationStrategies.stream()
                 .filter(strategy -> strategy.supports(customer.getCustomerType()))
                 .findFirst()
-                .map(strategy -> strategy.validate(customer, newAccount, existingAccounts))
-                .orElseGet(() -> Completable.error(new BusinessRuleException(
-                        "Unsupported customer type: " + customer.getCustomerType())));
+                .map(strategy -> strategy.validate(customer, account, existing, hasCard))
+                .orElseGet(() -> Completable.error(new BusinessRuleException("Unsupported customer type: " + customer.getCustomerType())));
     }
 
     /**
-     * Verifies the uniqueness of the account number and saves the bank account if unique.
+     * Saves the new bank account to the repository after ensuring that the account number is unique.
      *
-     * @param account the bank account to verify and save
-     * @return Single emitting the saved BankAccount or an error if a duplicate exists
+     * @param account - The bank account to be saved.
+     * @return - Single emitting the saved BankAccount or an error if the account number already exists.
      */
-    private Single<BankAccount> verifyUniquenessAndSave(BankAccount account) {
+    private Single<BankAccount> saveUniqueAccount(BankAccount account) {
         return accountRepository.existsByAccountNumberHash(account.getAccountNumberHash())
-                .flatMap(exists -> {
-                    // Guard condition: If a bank account with the same account number already exists,
-                    // throw a DuplicateAccountException
-                    if (Boolean.TRUE.equals(exists)) {
-                        return Single.error(new DuplicateAccountException(
-                                "A bank account with the specified account number already exists."));
-                    }
-                    return accountRepository.save(account);
-                });
-    }
-
-    /**
-     * Configures default values for a new bank account based on its type and
-     * the associated customer information.
-     *
-     * @param account the bank account to configure
-     * @param customer the customer summary associated with the account
-     */
-    private void configureProductDefaults(BankAccount account, CustomerSummary customer) {
-        // Set default values for account fields based on account type and customer information
-        String rawAccountNumber = Optional.ofNullable(account.getAccountNumber())
-                .filter(num -> !num.isBlank())
-                .orElseGet(() -> "191-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()
-                        + "-0-01");
-
-        // Set account number, hash, currency, balance, status, and other defaults
-        account.setAccountNumber(rawAccountNumber);
-        account.setAccountNumberHash(cryptoUtil.hashSha256(rawAccountNumber));
-        account.setCurrency(Optional.ofNullable(account.getCurrency()).orElse("PEN"));
-        account.setBalance(Optional.ofNullable(account.getBalance()).orElse(BigDecimal.ZERO));
-        account.setCurrentMonthlyMovements(0);
-        account.setStatus(Optional.ofNullable(account.getStatus()).orElse(AccountStatus.ACTIVE));
-
-        // Set account type specific defaults
-        if (account.getAccountType() == AccountType.SAVINGS) {
-            account.setMaintenanceFee(rulesProperties.getZeroMaintenanceFee());
-            account.setMaxMonthlyMovements(Optional.ofNullable(account.getMaxMonthlyMovements())
-                    .orElse(rulesProperties.getSavingsMaxMonthlyMovements()));
-            account.setAllowedMovementDay(null);
-        // Set defaults for CHECKING and FIXED_TERM account types
-        } else if (account.getAccountType() == AccountType.CHECKING) {
-            account.setMaintenanceFee(Optional.ofNullable(account.getMaintenanceFee())
-                    .orElse(rulesProperties.getCheckingMaintenanceFee()));
-            account.setMaxMonthlyMovements(null);
-            account.setAllowedMovementDay(null);
-        // Set defaults for FIXED_TERM account type
-        } else if (account.getAccountType() == AccountType.FIXED_TERM) {
-            account.setMaintenanceFee(rulesProperties.getZeroMaintenanceFee());
-            account.setMaxMonthlyMovements(rulesProperties.getFixedTermMaxMonthlyMovements());
-        }
-
-        // Set holders and authorized signers based on customer information
-        if (account.getHolders() == null || account.getHolders().isEmpty()) {
-            account.setHolders(List.of(customer.getDocumentNumber()));
-        }
-        // Set authorized signers to an empty list if not provided
-        if (account.getAuthorizedSigners() == null) {
-            account.setAuthorizedSigners(Collections.emptyList());
-        }
-
-        // Set the creation and update timestamps to the current instant
-        Instant now = Instant.now();
-        account.setCreatedAt(now);
-        account.setUpdatedAt(now);
+                .flatMap(exists -> Boolean.TRUE.equals(exists)
+                        ? Single.error(new DuplicateAccountException("An account with the specified account number already exists."))
+                        : accountRepository.save(account));
     }
 }
