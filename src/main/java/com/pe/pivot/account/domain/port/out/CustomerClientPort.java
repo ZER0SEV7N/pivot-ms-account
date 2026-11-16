@@ -7,5 +7,5 @@ import io.reactivex.rxjava3.core.Maybe;
  * Output Port for communicating reactively with ms-customer.
  */
 public interface CustomerClientPort {
-    Maybe<CustomerSummary> findCustomerById(String customerId);
+  Maybe<CustomerSummary> findCustomerById(String customerId);
 }

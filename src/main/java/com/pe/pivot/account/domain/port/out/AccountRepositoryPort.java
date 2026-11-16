@@ -7,14 +7,20 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
- * Output Port for bank account persistence operations in MongoDB
+ * Output Port for bank account persistence operations in MongoDB.
  */
 public interface AccountRepositoryPort {
-    Single<BankAccount> save(BankAccount account);
-    Flowable<BankAccount> findAll();
-    Maybe<BankAccount> findById(String id);
-    Maybe<BankAccount> findByAccountNumberHash(String accountNumberHash);
-    Flowable<BankAccount> findByCustomerId(String customerId);
-    Single<Boolean> existsByAccountNumberHash(String accountNumberHash);
-    Completable deleteById(String id);
+  Single<BankAccount> save(BankAccount account);
+
+  Flowable<BankAccount> findAll();
+
+  Maybe<BankAccount> findById(String id);
+
+  Maybe<BankAccount> findByAccountNumberHash(String accountNumberHash);
+
+  Flowable<BankAccount> findByCustomerId(String customerId);
+
+  Single<Boolean> existsByAccountNumberHash(String accountNumberHash);
+
+  Completable deleteById(String id);
 }

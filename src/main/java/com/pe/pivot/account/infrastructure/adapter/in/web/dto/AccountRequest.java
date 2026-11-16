@@ -2,11 +2,15 @@ package com.pe.pivot.account.infrastructure.adapter.in.web.dto;
 
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.AccountType;
-import jakarta.validation.constraints.*;
-import lombok.Builder;
-
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.util.List;
+import lombok.Builder;
 
 /**
  * Immutable Request DTO using Java 17 Record for creating or updating a bank account (Part I).

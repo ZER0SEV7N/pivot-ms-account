@@ -11,7 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-  // Base URL for the customer service, injected from application properties or defaulting to localhost.
+  // Base URL for the customer service, injected from application properties or localhost.
   @Value("${application.clients.customer-service.url:http://localhost:8081/api/v1/customers}")
   private String customerServiceUrl;
 
@@ -27,8 +27,8 @@ public class WebClientConfig {
   @Bean
   public WebClient customerWebClient() {
     return WebClient.builder()
-            .baseUrl(customerServiceUrl)
-            .build();
+        .baseUrl(customerServiceUrl)
+        .build();
   }
 
   /**
@@ -39,7 +39,7 @@ public class WebClientConfig {
   @Bean
   public WebClient creditWebClient() {
     return WebClient.builder()
-            .baseUrl(creditServiceUrl)
-            .build();
+        .baseUrl(creditServiceUrl)
+        .build();
   }
 }

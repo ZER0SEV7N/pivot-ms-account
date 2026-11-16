@@ -12,13 +12,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class StrategyConfig {
 
-    @Bean
-    public AccountValidationStrategy personalAccountStrategy() {
-        return new PersonalAccountStrategy();
-    }
+  @Bean
+  public AccountValidationStrategy personalAccountStrategy() {
+    return new PersonalAccountStrategy();
+  }
 
-    @Bean
-    public AccountValidationStrategy businessAccountStrategy() {
-        return new BusinessAccountStrategy();
-    }
+  @Bean
+  public AccountValidationStrategy businessAccountStrategy() {
+    return new BusinessAccountStrategy();
+  }
 }

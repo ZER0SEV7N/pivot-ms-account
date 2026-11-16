@@ -19,18 +19,19 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FindAccountByIdUseCaseImpl implements FindAccountByIdUseCase {
 
-    private final AccountRepositoryPort accountRepository;
+  private final AccountRepositoryPort accountRepository;
 
-    /**
-     * Finds a Bank account by its mongo Id.
-     *
-     * @param id the unique identifier of the bank account
-     * @return Single emitting the found BankAccount or an error if not found
-     */
-    @Override
-    public Single<BankAccount> findById(String id) {
-        log.debug("Searching bank account by ID: {}", id);
-        return accountRepository.findById(id)
-                .switchIfEmpty(Single.error(new AccountNotFoundException("Bank account not found with ID: " + id)));
-    }
+  /**
+   * Finds a Bank account by its mongo Id.
+   *
+   * @param id the unique identifier of the bank account
+   * @return Single emitting the found BankAccount or an error if not found
+   */
+  @Override
+  public Single<BankAccount> findById(String id) {
+    log.debug("Searching bank account by ID: {}", id);
+    return accountRepository.findById(id)
+        .switchIfEmpty(Single.error(new AccountNotFoundException(
+            "Bank account not found with ID: " + id)));
+  }
 }

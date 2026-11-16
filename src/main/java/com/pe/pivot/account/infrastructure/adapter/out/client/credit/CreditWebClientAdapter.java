@@ -13,7 +13,8 @@ import reactor.adapter.rxjava.RxJava3Adapter;
 import reactor.core.publisher.Mono;
 
 /**
- * Output Adapter communicating reactively with ms-credit (:8083) protected by Resilience4j Circuit Breaker (2s timeout).
+ * Output Adapter communicating reactively with ms-credit (:8083) protected by Resilience4j
+ * Circuit Breaker (2s timeout).
  */
 @Slf4j
 @Component
@@ -31,20 +32,23 @@ public class CreditWebClientAdapter implements CreditClientPort {
    * @throws BusinessRuleException if the ms-credit service is unavailable or times out.
    */
   @Override
-  public Single<Boolean> hasActiveCreditCard (String customerId) {
+  public Single<Boolean> hasActiveCreditCard(String customerId) {
     log.debug("Checking active credit card in ms-credit for customerId: {}", customerId);
 
-    // Create a Mono to call the ms-credit service and check if the customer has an active credit card
+    // Create a Mono to call the ms-credit service and check for an active credit card
     Mono<Boolean> mono = creditWebClient.get()
-            .uri("/customer/{customerId}", customerId)
-            .retrieve()
-            .bodyToFlux(CreditSummaryDto.class)
-            .any(CreditSummaryDto::isActiveCreditCard)
-            .transform(it -> circuitBreakerFactory.create("creditServiceCircuitBreaker")
-                    .run(it, throwable -> {
-                      log.error("Circuit breaker triggered calling ms-credit for customerId {}: {}", customerId, throwable.getMessage());
-                      return Mono.error(new BusinessRuleException("Credit verification service (ms-credit) is currently unavailable or timed out (2s)."));
-                    }));
+        .uri("/customer/{customerId}", customerId)
+        .retrieve()
+        .bodyToFlux(CreditSummaryDto.class)
+        .any(CreditSummaryDto::isActiveCreditCard)
+        .transform(it -> circuitBreakerFactory.create("creditServiceCircuitBreaker")
+            .run(it, throwable -> {
+              log.error("Circuit breaker triggered calling ms-credit for customerId {}: {}",
+                  customerId, throwable.getMessage());
+              return Mono.error(new BusinessRuleException(
+                  "Credit verification service (ms-credit) is currently unavailable or "
+                      + "timed out (2s)."));
+            }));
 
     return RxJava3Adapter.monoToSingle(mono);
   }

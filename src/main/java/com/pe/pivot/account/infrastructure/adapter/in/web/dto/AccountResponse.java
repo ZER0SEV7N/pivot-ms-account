@@ -2,11 +2,10 @@ package com.pe.pivot.account.infrastructure.adapter.in.web.dto;
 
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.AccountType;
-import lombok.Builder;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import lombok.Builder;
 
 /**
  * Immutable Response DTO representing a bank account.
