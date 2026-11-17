@@ -1,21 +1,37 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}  %msg%n"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="pivot-ms"/>
+    <property name="LOG_PATH" value="${LOG_PATH:-../ENVIROMENT/logs}"/>
 
-    <!-- Configure the console appender -->
+
+    <!-- Console appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%property{APP_NAME}] [corrId=%X{X-Correlation-Id:-N/A}] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Configure the logger for the account service -->
-    <logger name="com.pe.pivot.account" level="DEBUG" additivity="false">
+    <!-- File appender -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%property{APP_NAME}] [corrId=%X{X-Correlation-Id:-N/A}] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger for the account service -->
+    <logger name="com.pe.pivot" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 
-    <!-- Configure the root logger -->
+    <!-- Root logger -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
 </configuration>

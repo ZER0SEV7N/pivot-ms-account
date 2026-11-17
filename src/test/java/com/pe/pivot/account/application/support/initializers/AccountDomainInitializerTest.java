@@ -203,6 +203,41 @@ class AccountDomainInitializerTest {
   }
 
   @Test
+  @DisplayName("Should generate a default account number when the supplied one is blank")
+  void shouldGenerateDefaultAccountNumberWhenBlank() {
+    // Arrange
+    CustomerSummary customer = customer("PERSONAL", null);
+    BankAccount account = BankAccount.builder()
+        .accountNumber("   ")
+        .accountType(AccountType.SAVINGS)
+        .build();
+
+    // Act
+    initializer.initializeAndValidate(customer, account);
+
+    // Assert
+    assertThat(account.getAccountNumber()).startsWith("191-").endsWith("-0-01");
+    assertThat(account.getAccountNumber()).isNotBlank();
+  }
+
+  @Test
+  @DisplayName("Should fall back to the customer document when holders are empty")
+  void shouldFallBackToCustomerDocumentWhenHoldersAreEmpty() {
+    // Arrange
+    CustomerSummary customer = customer("PERSONAL", null);
+    BankAccount account = BankAccount.builder()
+        .accountType(AccountType.SAVINGS)
+        .holders(List.of())
+        .build();
+
+    // Act
+    initializer.initializeAndValidate(customer, account);
+
+    // Assert
+    assertThat(account.getHolders()).containsExactly("12345678");
+  }
+
+  @Test
   @DisplayName("Should preserve an explicitly supplied FIXED_TERM movement day")
   void shouldPreserveFixedTermMovementDay() {
     // Arrange

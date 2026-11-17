@@ -18,7 +18,7 @@ class DataMaskingUtilTest {
   }
 
   @Test
-  @DisplayName("Should return the fixed mask when the account number is shorter than four characters")
+  @DisplayName("Should return the fixed mask when the account number is short")
   void shouldMaskShortAccountNumber() {
     // Act / Assert
     assertThat(DataMaskingUtil.maskAccountNumber("123")).isEqualTo("****");

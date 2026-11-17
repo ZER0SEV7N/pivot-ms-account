@@ -214,6 +214,24 @@ class AccountBalancePolicyTest {
   }
 
   @Test
+  @DisplayName("Should skip the fixed-term window when the movement day is not configured")
+  void shouldSkipFixedTermWindowWhenMovementDayIsNull() {
+    // Arrange
+    BankAccount account = activeAccount();
+    account.setAccountType(AccountType.FIXED_TERM);
+    account.setAllowedMovementDay(null);
+    account.setMaxMonthlyMovements(1);
+    account.setCurrentMonthlyMovements(0);
+    account.setBalance(new BigDecimal("100.00"));
+
+    // Act
+    policy.applyMovement(account, OperationType.DEPOSIT, new BigDecimal("10.00"));
+
+    // Assert
+    assertThat(account.getBalance()).isEqualByComparingTo("110.00");
+  }
+
+  @Test
   @DisplayName("Should reject a withdrawal that exceeds the available balance plus commission")
   void shouldRejectWithdrawalWithInsufficientFunds() {
     // Arrange

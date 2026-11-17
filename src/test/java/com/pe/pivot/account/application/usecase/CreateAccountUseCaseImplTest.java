@@ -62,13 +62,13 @@ class CreateAccountUseCaseImplTest {
   void shouldCreatePersonalAccountWhenCustomerIsActive() {
     // Arrange
     CustomerSummary customer = customer("PERSONAL", null);
-    BankAccount account = newAccount();
     BankAccount saved = newAccount();
     saved.setId("account-1");
 
     when(customerClient.findCustomerById(CUSTOMER_ID)).thenReturn(Maybe.just(customer));
     when(accountRepository.findByCustomerId(CUSTOMER_ID)).thenReturn(Flowable.empty());
     when(validationStrategy.supports("PERSONAL")).thenReturn(true);
+    BankAccount account = newAccount();
     when(validationStrategy.validate(customer, account, List.of(), false))
         .thenReturn(Completable.complete());
     when(accountRepository.existsByAccountNumberHash(ACCOUNT_HASH))

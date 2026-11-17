@@ -35,6 +35,9 @@ class BusinessAccountStrategyTest {
         .build();
   }
 
+  /**
+   * Verifies that the strategy only claims support for the BUSINESS customer type.
+   */
   @Test
   @DisplayName("Should support the BUSINESS customer type ignoring case")
   void shouldSupportBusinessCustomerType() {

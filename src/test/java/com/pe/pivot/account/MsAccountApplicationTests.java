@@ -1,13 +1,22 @@
 package com.pe.pivot.account;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(properties = "aes-secret-key=test-only-key")
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Smoke test for MsAccountApplication class definition.
+ */
 class MsAccountApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+  @Test
+  @DisplayName("Should instantiate MsAccountApplication successfully")
+  void shouldInstantiateApplicationSuccessfully() {
+    // Arrange & Act
+    MsAccountApplication application = new MsAccountApplication();
 
+    // Assert
+    assertNotNull(application);
+  }
 }

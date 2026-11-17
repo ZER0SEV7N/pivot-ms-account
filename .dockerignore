@@ -1,0 +1,11 @@
+target/
+.git/
+.idea/
+.mvn/
+*.iml
+*.log
+.env
+*.drawio
+*.drawio.bkp
+*.postman_collection.json
+README.md

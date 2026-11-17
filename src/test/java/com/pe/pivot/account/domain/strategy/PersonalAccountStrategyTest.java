@@ -34,6 +34,9 @@ class PersonalAccountStrategyTest {
         .build();
   }
 
+  /**
+   * Verifies that the strategy only claims support for the PERSONAL customer type.
+   */
   @Test
   @DisplayName("Should support only the PERSONAL customer type")
   void shouldSupportOnlyPersonalCustomerType() {
