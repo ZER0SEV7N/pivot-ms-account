@@ -11,8 +11,9 @@ public interface UpdateDebitCardUseCase {
   /**
    * Updates an existing debit card.
    *
+   * @param id the unique identifier of the debit card to update
    * @param debitCard the debit card to update
    * @return Single emitting the updated DebitCard, or an error if the update fails
    */
-  Single<DebitCard> update(DebitCard debitCard);
+  Single<DebitCard> update(String id, DebitCard debitCard);
 }
