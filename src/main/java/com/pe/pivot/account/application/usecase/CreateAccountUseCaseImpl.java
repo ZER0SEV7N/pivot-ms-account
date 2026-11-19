@@ -1,6 +1,6 @@
 package com.pe.pivot.account.application.usecase;
 
-import com.pe.pivot.account.application.support.initializers.AccountDomainInitializer;
+import com.pe.pivot.account.application.support.accounts.AccountDomainInitializer;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
 import com.pe.pivot.account.domain.exception.DuplicateAccountException;

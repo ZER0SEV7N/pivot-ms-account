@@ -1,4 +1,4 @@
-package com.pe.pivot.account.application.support.initializers;
+package com.pe.pivot.account.application.support.accounts;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

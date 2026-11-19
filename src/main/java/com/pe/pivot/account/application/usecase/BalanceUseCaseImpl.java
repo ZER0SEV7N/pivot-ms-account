@@ -1,6 +1,6 @@
 package com.pe.pivot.account.application.usecase;
 
-import com.pe.pivot.account.application.support.initializers.AccountBalancePolicy;
+import com.pe.pivot.account.application.support.accounts.AccountBalancePolicy;
 import com.pe.pivot.account.domain.model.BankAccount;
 import com.pe.pivot.account.domain.model.OperationType;
 import com.pe.pivot.account.domain.port.in.FindAccountByIdUseCase;

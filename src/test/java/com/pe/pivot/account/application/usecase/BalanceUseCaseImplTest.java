@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.pe.pivot.account.application.support.initializers.AccountBalancePolicy;
+import com.pe.pivot.account.application.support.accounts.AccountBalancePolicy;
 import com.pe.pivot.account.domain.exception.AccountNotFoundException;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.model.AccountStatus;

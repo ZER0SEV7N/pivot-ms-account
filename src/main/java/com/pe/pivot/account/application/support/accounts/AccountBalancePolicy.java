@@ -1,4 +1,4 @@
-package com.pe.pivot.account.application.support.initializers;
+package com.pe.pivot.account.application.support.accounts;
 
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.model.AccountStatus;
