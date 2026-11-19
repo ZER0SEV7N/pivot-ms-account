@@ -1,6 +1,6 @@
-package com.pe.pivot.account.infrastructure.adapter.out.persistence.repository;
+package com.pe.pivot.account.infrastructure.adapter.out.persistence.account.repository;
 
-import com.pe.pivot.account.infrastructure.adapter.out.persistence.entity.BankAccountDocument;
+import com.pe.pivot.account.infrastructure.adapter.out.persistence.account.entity.BankAccountDocument;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;

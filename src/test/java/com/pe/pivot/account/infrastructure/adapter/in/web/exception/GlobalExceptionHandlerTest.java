@@ -8,7 +8,7 @@ import com.pe.pivot.account.domain.exception.AccountNotFoundException;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
 import com.pe.pivot.account.domain.exception.DuplicateAccountException;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.ErrorResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.ErrorResponse;
 import io.reactivex.rxjava3.observers.TestObserver;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,9 +1,9 @@
-package com.pe.pivot.account.infrastructure.adapter.in.web.mapper;
+package com.pe.pivot.account.infrastructure.adapter.in.web.account.mapper;
 
 import com.pe.pivot.account.domain.model.BankAccount;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountRequest;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountResponse;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.BalanceResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.AccountRequest;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.AccountResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.BalanceResponse;
 import com.pe.pivot.account.infrastructure.util.DataMaskingUtil;
 import java.time.Instant;
 import org.springframework.stereotype.Component;

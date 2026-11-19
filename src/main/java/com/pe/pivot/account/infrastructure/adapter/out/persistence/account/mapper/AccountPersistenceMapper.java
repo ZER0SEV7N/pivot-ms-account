@@ -1,9 +1,9 @@
-package com.pe.pivot.account.infrastructure.adapter.out.persistence.mapper;
+package com.pe.pivot.account.infrastructure.adapter.out.persistence.account.mapper;
 
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.AccountType;
 import com.pe.pivot.account.domain.model.BankAccount;
-import com.pe.pivot.account.infrastructure.adapter.out.persistence.entity.BankAccountDocument;
+import com.pe.pivot.account.infrastructure.adapter.out.persistence.account.entity.BankAccountDocument;
 import com.pe.pivot.account.infrastructure.util.CryptoUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

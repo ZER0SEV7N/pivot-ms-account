@@ -1,9 +1,9 @@
-package com.pe.pivot.account.infrastructure.adapter.out.persistence;
+package com.pe.pivot.account.infrastructure.adapter.out.persistence.account;
 
 import com.pe.pivot.account.domain.model.BankAccount;
 import com.pe.pivot.account.domain.port.out.AccountRepositoryPort;
-import com.pe.pivot.account.infrastructure.adapter.out.persistence.mapper.AccountPersistenceMapper;
-import com.pe.pivot.account.infrastructure.adapter.out.persistence.repository.ReactiveAccountMongoRepository;
+import com.pe.pivot.account.infrastructure.adapter.out.persistence.account.mapper.AccountPersistenceMapper;
+import com.pe.pivot.account.infrastructure.adapter.out.persistence.account.repository.ReactiveAccountMongoRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;

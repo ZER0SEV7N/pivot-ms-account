@@ -1,4 +1,4 @@
-package com.pe.pivot.account.infrastructure.adapter.out.persistence.entity;
+package com.pe.pivot.account.infrastructure.adapter.out.persistence.account.entity;
 
 import java.math.BigDecimal;
 import java.time.Instant;

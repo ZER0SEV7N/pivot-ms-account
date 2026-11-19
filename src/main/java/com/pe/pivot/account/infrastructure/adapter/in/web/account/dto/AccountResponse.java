@@ -1,4 +1,4 @@
-package com.pe.pivot.account.infrastructure.adapter.in.web.dto;
+package com.pe.pivot.account.infrastructure.adapter.in.web.account.dto;
 
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.AccountType;

@@ -1,15 +1,15 @@
-package com.pe.pivot.account.infrastructure.adapter.in.web;
+package com.pe.pivot.account.infrastructure.adapter.in.web.account;
 
 import com.pe.pivot.account.domain.port.in.CreateAccountUseCase;
 import com.pe.pivot.account.domain.port.in.DeleteAccountUseCase;
 import com.pe.pivot.account.domain.port.in.RetrieveAccountUseCase;
 import com.pe.pivot.account.domain.port.in.UpdateAccountUseCase;
 import com.pe.pivot.account.domain.port.in.UpdateBalanceUseCase;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountRequest;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.AccountResponse;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.BalanceResponse;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.BalanceUpdateRequest;
-import com.pe.pivot.account.infrastructure.adapter.in.web.mapper.AccountWebMapper;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.AccountRequest;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.AccountResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.BalanceResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.BalanceUpdateRequest;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.mapper.AccountWebMapper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;

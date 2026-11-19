@@ -1,4 +1,4 @@
-package com.pe.pivot.account.infrastructure.adapter.in.web.dto;
+package com.pe.pivot.account.infrastructure.adapter.in.web.account.dto;
 
 import java.time.Instant;
 import lombok.Builder;
