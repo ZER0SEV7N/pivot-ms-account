@@ -54,6 +54,12 @@ public class CustomerWebClientAdapter implements CustomerClientPort {
     return RxJava3Adapter.monoToMaybe(mono);
   }
 
+  /**
+   * Converts a CustomerClientResponse DTO to a CustomerSummary domain object.
+   *
+   * @param dto - the CustomerClientResponse DTO
+   * @return - the corresponding CustomerSummary domain object
+   */
   private CustomerSummary toDomain(CustomerClientResponse dto) {
     return CustomerSummary.builder()
         .id(dto.id())
@@ -61,6 +67,9 @@ public class CustomerWebClientAdapter implements CustomerClientPort {
         .profile(dto.profile())
         .documentNumber(dto.documentNumber())
         .status(dto.status())
+        .firstName(dto.firstName())
+        .lastName(dto.lastName())
+        .businessName(dto.businessName())
         .build();
   }
 }

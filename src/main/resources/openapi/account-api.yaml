@@ -13,6 +13,8 @@ servers:
 tags:
   - name: Accounts
     description: Operations for managing passive bank accounts, balances, and lifecycle states
+  - name: Debit Cards
+    description: Operations for managing debit cards, associated accounts, cascading payments, and primary account balance queries
 
 paths:
   /accounts:
@@ -267,6 +269,256 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /debit-cards:
+    post:
+      tags:
+        - Debit Cards
+      summary: Issue a new debit card linked to a primary account and optional secondary accounts
+      description: |
+        Validates that the customer is ACTIVE, holds no OVERDUE credit debt in ms-credit,
+        and owns all referenced ACTIVE bank accounts. Returns the unmasked 16-digit card number once.
+      operationId: createDebitCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitCardRequest'
+      responses:
+        '201':
+          description: Debit card issued successfully (unmasked number returned once)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebitCardResponse'
+        '400':
+          description: Business rule violation (overdue debt, invalid account ownership, inactive account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Customer or referenced bank account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Debit Cards
+      summary: Retrieve all debit cards (masked card numbers)
+      operationId: getAllDebitCards
+      responses:
+        '200':
+          description: Stream of all debit cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DebitCardResponse'
+
+  /debit-cards/{id}:
+    get:
+      tags:
+        - Debit Cards
+      summary: Get debit card by ID (masked card number, Redis Cache-Aside)
+      operationId: getDebitCardById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debit card found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebitCardResponse'
+        '404':
+          description: Debit card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Debit Cards
+      summary: Update debit card linked accounts (primary/secondary order) or status
+      operationId: updateDebitCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitCardUpdateRequest'
+      responses:
+        '200':
+          description: Debit card updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebitCardResponse'
+        '400':
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Debit card or referenced account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Debit Cards
+      summary: Soft delete (logically close) a debit card
+      operationId: deleteDebitCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Debit card logically closed (status set to CLOSED)
+        '404':
+          description: Debit card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /debit-cards/number/{cardNumber}:
+    get:
+      tags:
+        - Debit Cards
+      summary: Get debit card by plain card number via SHA-256 blind index
+      operationId: getDebitCardByNumber
+      parameters:
+        - name: cardNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debit card found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebitCardResponse'
+        '404':
+          description: Debit card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /debit-cards/customer/{customerId}:
+    get:
+      tags:
+        - Debit Cards
+      summary: Get all debit cards belonging to a customer
+      operationId: getDebitCardsByCustomerId
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of customer debit cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DebitCardResponse'
+
+  /debit-cards/{id}/balance:
+    get:
+      tags:
+        - Debit Cards
+      summary: Consult available balance of the primary account linked to the debit card
+      operationId: getDebitCardPrimaryBalance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Primary account balance retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '404':
+          description: Debit card or primary account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /debit-cards/{id}/pay:
+    patch:
+      tags:
+        - Debit Cards
+      summary: Process a debit card payment or withdrawal with cascading debit across linked accounts
+      description: |
+        Attempts to debit the primary account first. If its available balance is insufficient,
+        cascades through secondary accounts in their configured priority order.
+        Used by ms-transaction for DEBIT_CARD_PAYMENT and DEBIT_CARD_WITHDRAWAL operations.
+      operationId: payWithDebitCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitCardPaymentRequest'
+      responses:
+        '200':
+          description: Payment debited successfully across one or more linked accounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebitCardPaymentResponse'
+        '400':
+          description: Insufficient combined funds, inactive card, or invalid amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Debit card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     AccountType:
@@ -451,3 +703,114 @@ components:
           type: string
         path:
           type: string
+
+    DebitCardStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - BLOCKED
+        - CLOSED
+
+    DebitCardRequest:
+      type: object
+      required:
+        - customerId
+        - primaryAccountId
+      properties:
+        customerId:
+          type: string
+        primaryAccountId:
+          type: string
+        secondaryAccountIds:
+          type: array
+          description: Ordered list of secondary account IDs used as fallback during cascading debits
+          items:
+            type: string
+
+    DebitCardUpdateRequest:
+      type: object
+      properties:
+        primaryAccountId:
+          type: string
+        secondaryAccountIds:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/DebitCardStatus'
+
+    DebitCardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        cardNumber:
+          type: string
+          example: '************4821'
+        customerId:
+          type: string
+        primaryAccountId:
+          type: string
+        secondaryAccountIds:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/DebitCardStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DebitCardPaymentRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+
+    DebitedAccountDetail:
+      type: object
+      properties:
+        accountId:
+          type: string
+        maskedAccountNumber:
+          type: string
+        debitedAmount:
+          type: number
+          format: double
+        appliedCommission:
+          type: number
+          format: double
+        previousBalance:
+          type: number
+          format: double
+        newBalance:
+          type: number
+          format: double
+
+    DebitCardPaymentResponse:
+      type: object
+      properties:
+        debitCardId:
+          type: string
+        maskedCardNumber:
+          type: string
+        totalAmount:
+          type: number
+          format: double
+        totalCommission:
+          type: number
+          format: double
+        debitedAccounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DebitedAccountDetail'
+        processedAt:
+          type: string
+          format: date-time
