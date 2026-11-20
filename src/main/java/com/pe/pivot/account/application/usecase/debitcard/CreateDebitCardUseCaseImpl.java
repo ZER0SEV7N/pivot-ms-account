@@ -6,8 +6,8 @@ import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.CustomerSummary;
 import com.pe.pivot.account.domain.model.debit.DebitCard;
-import com.pe.pivot.account.domain.port.in.debit.CreateDebitCardUseCase;
 import com.pe.pivot.account.domain.port.in.FindAccountByIdUseCase;
+import com.pe.pivot.account.domain.port.in.debit.CreateDebitCardUseCase;
 import com.pe.pivot.account.domain.port.out.CreditClientPort;
 import com.pe.pivot.account.domain.port.out.CustomerClientPort;
 import com.pe.pivot.account.domain.port.out.DebitCardRepositoryPort;
@@ -48,7 +48,8 @@ public class CreateDebitCardUseCaseImpl implements CreateDebitCardUseCase {
     // Validate that the customer exists and is active, has no overdue credit debt,
     return fetchActiveCustomer(debitCard.getCustomerId())
             .flatMap(customer -> validateNoOverdueDebt(customer)
-                    .andThen(validateLinkedAccounts(customer.getId(), debitCard.getOrderedAccountIds()))
+                    .andThen(validateLinkedAccounts(
+                            customer.getId(), debitCard.getOrderedAccountIds()))
                     .andThen(Single.defer(() -> {
                       initializer.initialize(customer, debitCard);
                       return debitCardRepository.save(debitCard);
@@ -96,8 +97,10 @@ public class CreateDebitCardUseCaseImpl implements CreateDebitCardUseCase {
    *
    * @param customerId the unique identifier of the customer
    * @param accountIds the list of account IDs to validate
-   * @return Completable completing if all accounts are valid, or emitting BusinessRuleException if any account is invalid
-   * @throws BusinessRuleException if any linked account does not belong to the customer or is not ACTIVE
+   * @return Completable completing if all accounts are valid, or emitting BusinessRuleException
+   *     if any account is invalid
+   * @throws BusinessRuleException if any linked account does not belong to the customer or is not
+   *     ACTIVE
    * @throws CustomerNotFoundException if the customer does not exist
    */
   private Completable validateLinkedAccounts(String customerId, List<String> accountIds) {
@@ -106,11 +109,13 @@ public class CreateDebitCardUseCaseImpl implements CreateDebitCardUseCase {
                     .flatMapCompletable(account -> {
                       if (!customerId.equals(account.getCustomerId())) {
                         return Completable.error(new BusinessRuleException(
-                                "Account " + accountId + " does not belong to customer " + customerId));
+                                "Account " + accountId + " does not belong to customer "
+                                        + customerId));
                       }
                       if (account.getStatus() != AccountStatus.ACTIVE) {
                         return Completable.error(new BusinessRuleException(
-                                "Cannot link non-ACTIVE account " + accountId + " to a debit card."));
+                                "Cannot link non-ACTIVE account " + accountId
+                                        + " to a debit card."));
                       }
                       return Completable.complete();
                     })

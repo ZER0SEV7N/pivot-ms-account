@@ -50,7 +50,8 @@ public class CreateAccountUseCaseImpl implements CreateAccountUseCase {
     // return if the customer is active, has no overdue debt, and passes all strategy validations
     return fetchActiveCustomer(account.getCustomerId())
             .flatMap(customer -> validateNoOverdueDebt(customer)
-                    // Check if the customer has an active credit card if required by VIP or PYME profiles
+                    // Check if the customer has an active credit card if required by VIP or PYME
+                    // profiles
                     .andThen(Single.defer(() -> Single.zip(
                             accountRepository.findByCustomerId(customer.getId()).toList(),
                             checkCreditCardIfRequired(customer),
@@ -92,11 +93,13 @@ public class CreateAccountUseCaseImpl implements CreateAccountUseCase {
    * @return Completable completing if eligible, or emitting BusinessRuleException if overdue
    */
   private Completable validateNoOverdueDebt(CustomerSummary customer) {
-    // Check if the customer has any overdue credit debt in ms-credit before allowing account creation
+    // Check if the customer has any overdue credit debt in ms-credit before allowing account
+    // creation
     return creditClient.hasOverdueDebt(customer.getId())
             .flatMapCompletable(hasOverdue -> Boolean.TRUE.equals(hasOverdue)
                     ? Completable.error(new BusinessRuleException(
-                    "Customer cannot open a new bank account while holding an overdue credit debt."))
+                    "Customer cannot open a new bank account while holding an overdue credit "
+                            + "debt."))
                     : Completable.complete());
   }
 
@@ -124,7 +127,8 @@ public class CreateAccountUseCaseImpl implements CreateAccountUseCase {
    */
   private Completable validateWithStrategy(CustomerSummary customer, BankAccount account,
                                            List<BankAccount> existing, boolean hasCard) {
-    // Find the appropriate validation strategy based on the customer type and apply it to validate the new account.
+    // Find the appropriate validation strategy based on the customer type and apply it to
+    // validate the new account.
     return validationStrategies.stream()
             .filter(strategy -> strategy.supports(customer.getCustomerType()))
             .findFirst()

@@ -50,7 +50,8 @@ public class UpdateDebitCardUseCaseImpl implements UpdateDebitCardUseCase {
                 return Single.error(
                         new BusinessRuleException("Cannot modify a CLOSED debit card."));
               }
-              // Update the primary account ID and sanitize secondary account IDs based on the incoming request
+              // Update the primary account ID and sanitize secondary account IDs based on the
+              // incoming request
               String newPrimary = Optional.ofNullable(incoming.getPrimaryAccountId())
                       .orElse(existing.getPrimaryAccountId());
               existing.setPrimaryAccountId(newPrimary);
@@ -59,22 +60,27 @@ public class UpdateDebitCardUseCaseImpl implements UpdateDebitCardUseCase {
               // sanitize them; otherwise, keep existing secondary account IDs
               if (incoming.getSecondaryAccountIds() != null) {
                 existing.setSecondaryAccountIds(
-                        initializer.sanitizeSecondaryIds(newPrimary, incoming.getSecondaryAccountIds()));
+                        initializer.sanitizeSecondaryIds(
+                                newPrimary, incoming.getSecondaryAccountIds()));
               // If secondary account IDs are not provided, keep existing secondary account IDs
               } else {
                 existing.setSecondaryAccountIds(
-                        initializer.sanitizeSecondaryIds(newPrimary, existing.getSecondaryAccountIds()));
+                        initializer.sanitizeSecondaryIds(
+                                newPrimary, existing.getSecondaryAccountIds()));
               }
 
-              // Update the status if provided in the incoming request; otherwise, keep existing status
+              // Update the status if provided in the incoming request; otherwise, keep existing
+              // status
               Optional.ofNullable(incoming.getStatus()).ifPresent(existing::setStatus);
               existing.setUpdatedAt(Instant.now());
 
-              // Validate that all linked accounts (primary and secondary) belong to the same customer and are ACTIVE
+              // Validate that all linked accounts (primary and secondary) belong to the same
+              // customer and are ACTIVE
               return accountValidator.validateLinkedAccounts(
                               existing.getCustomerId(), existing.getOrderedAccountIds())
                       .andThen(Single.defer(() -> debitCardRepository.save(existing)));
             })
-            .doOnSuccess(updated -> log.info("Debit card updated successfully: {}", updated.getId()));
+            .doOnSuccess(updated -> log.info(
+                    "Debit card updated successfully: {}", updated.getId()));
   }
 }

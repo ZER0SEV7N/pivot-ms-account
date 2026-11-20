@@ -19,9 +19,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DebitCardDomainInitializer {
 
-  private static final String CARD_BIN_PREFIX = "455789"; // Example BIN prefix for Visa cards
-  private static final int RANDOM_DIGITS = 10; // Number of random digits to generate for the card number after the BIN prefix
-  private static final SecureRandom SECURE_RANDOM = new SecureRandom(); // Thread-safe random number generator for card number generation
+  // Example BIN prefix for Visa cards
+  private static final String CARD_BIN_PREFIX = "455789";
+  // Number of random digits to generate for the card number after the BIN prefix
+  private static final int RANDOM_DIGITS = 10;
+  // Thread-safe random number generator for card number generation
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
   private final CryptoUtil crypto;
 
@@ -38,8 +41,8 @@ public class DebitCardDomainInitializer {
     debitCard.setCardNumberHash(crypto.hashSha256(generatedNumber));
     debitCard.setCustomerName(customer.getDisplayName());
     debitCard.setSecondaryAccountIds(
-            sanitizeSecondaryIds(debitCard.getPrimaryAccountId(), debitCard.getSecondaryAccountIds())
-    );
+            sanitizeSecondaryIds(
+                    debitCard.getPrimaryAccountId(), debitCard.getSecondaryAccountIds()));
     debitCard.setStatus(DebitCardStatus.ACTIVE);
     Instant now = Instant.now();
     debitCard.setCreatedAt(now);
@@ -47,14 +50,15 @@ public class DebitCardDomainInitializer {
   }
 
   /**
-   * Sanitizes the list of secondary account IDs by removing null, blank, and duplicate entries,
+   * Sanitizes the list of secondary account IDs by removing null, blank, and duplicate entries.
    *
    * @param primaryAccountId the primary account ID to exclude from the secondary list
    * @param secondaryIds the list of secondary account IDs to sanitize
    * @return a sanitized list of unique secondary account IDs
    */
   public List<String> sanitizeSecondaryIds(String primaryAccountId, List<String> secondaryIds) {
-    // Remove null, blank, and duplicate secondary account IDs, ensuring the primary account ID is excluded
+    // Remove null, blank, and duplicate secondary account IDs, ensuring the primary account ID
+    // is excluded
     if (secondaryIds == null || secondaryIds.isEmpty()) {
       return Collections.emptyList();
     }

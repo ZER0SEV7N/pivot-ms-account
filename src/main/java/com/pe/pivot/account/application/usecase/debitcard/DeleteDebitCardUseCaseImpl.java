@@ -38,13 +38,15 @@ public class DeleteDebitCardUseCaseImpl implements DeleteDebitCardUseCase {
     return debitCardRepository.findById(id)
             .switchIfEmpty(io.reactivex.rxjava3.core.Maybe.error(
                     new DebitCardNotFoundException("Debit card not found with ID: " + id)))
-            // Validate that the debit card is not already CLOSED before proceeding with the logical deletion
+            // Validate that the debit card is not already CLOSED before proceeding with the
+            // logical deletion
             .flatMapCompletable(existing -> {
               if (existing.getStatus() == DebitCardStatus.CLOSED) {
                 return Completable.error(
                         new BusinessRuleException("Debit card is already CLOSED."));
               }
-              // Perform logical deletion by updating the status to CLOSED and setting the updated timestamp
+              // Perform logical deletion by updating the status to CLOSED and setting the updated
+              // timestamp
               existing.setStatus(DebitCardStatus.CLOSED);
               existing.setUpdatedAt(Instant.now());
               return debitCardRepository.save(existing).ignoreElement();

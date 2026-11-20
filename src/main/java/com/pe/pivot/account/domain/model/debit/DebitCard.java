@@ -51,12 +51,12 @@ public class DebitCard {
     Set<String> ordered = new LinkedHashSet<>();
 
     // Add secondary accounts first to maintain their order and uniqueness
-    if(this.primaryAccountId != null && !this.primaryAccountId.isBlank()) {
+    if (this.primaryAccountId != null && !this.primaryAccountId.isBlank()) {
       ordered.add(this.primaryAccountId);
     }
 
     // Add secondary accounts in the order they were added, ensuring uniqueness
-    if(this.secondaryAccountIds != null) {
+    if (this.secondaryAccountIds != null) {
       ordered.addAll(this.secondaryAccountIds);
     }
 

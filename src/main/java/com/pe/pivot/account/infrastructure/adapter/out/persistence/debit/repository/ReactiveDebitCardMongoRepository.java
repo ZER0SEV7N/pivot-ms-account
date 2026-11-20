@@ -8,7 +8,8 @@ import reactor.core.publisher.Mono;
 /**
  * Reactive Spring Data MongoDB repository for DebitCardDocument.
  */
-public interface ReactiveDebitCardMongoRepository extends ReactiveMongoRepository<DebitCardDocument, String> {
+public interface ReactiveDebitCardMongoRepository
+        extends ReactiveMongoRepository<DebitCardDocument, String> {
 
   /**
    * Finds a DebitCardDocument by its cardNumberHash.

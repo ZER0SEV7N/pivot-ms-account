@@ -4,10 +4,10 @@ import com.pe.pivot.account.application.support.accounts.AccountBalancePolicy;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.model.AccountStatus;
 import com.pe.pivot.account.domain.model.BankAccount;
+import com.pe.pivot.account.domain.model.OperationType;
 import com.pe.pivot.account.domain.model.debit.DebitCard;
 import com.pe.pivot.account.domain.model.debit.DebitCardPaymentResult;
 import com.pe.pivot.account.domain.model.debit.DebitedAccountEntry;
-import com.pe.pivot.account.domain.model.OperationType;
 import com.pe.pivot.account.infrastructure.util.DataMaskingUtil;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -35,7 +35,7 @@ public class CascadingDebitPolicy {
    * @param totalAmount total payment amount to debit
    * @return CascadingExecution containing modified accounts and the payment breakdown result
    */
-  public CascadingExecution execute (
+  public CascadingExecution execute(
           DebitCard card, List<BankAccount> orderedAccounts, BigDecimal totalAmount) {
     List<PlannedDebit> plan = buildDebitPlan(orderedAccounts, totalAmount);
     return applyPlan(card, plan, totalAmount);
@@ -53,10 +53,11 @@ public class CascadingDebitPolicy {
     BigDecimal remainingAmount = totalAmount;
     List<PlannedDebit> plan = new ArrayList<>();
 
-    // Iterate through the accounts in order of priority and determine how much can be debited from each
+    // Iterate through the accounts in order of priority and determine how much can be debited
+    // from each
     for (BankAccount account : accounts) {
       // Skip accounts that are not ACTIVE or have no spendable balance
-      if(remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+      if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
         break;
       }
 
@@ -69,10 +70,12 @@ public class CascadingDebitPolicy {
       }
     }
 
-    // If after iterating through all accounts there is still a remaining amount, it means the combined spendable balance is insufficient.
+    // If after iterating through all accounts there is still a remaining amount, it means the
+    // combined spendable balance is insufficient.
     if (remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
       throw new BusinessRuleException(
-              "Insufficient combined funds across linked accounts to cover payment of " + totalAmount);
+              "Insufficient combined funds across linked accounts to cover payment of "
+                      + totalAmount);
     }
 
     return plan;
@@ -90,7 +93,8 @@ public class CascadingDebitPolicy {
       return BigDecimal.ZERO;
     }
 
-    // Calculate the spendable balance by subtracting any applicable commission fees from the current balance.
+    // Calculate the spendable balance by subtracting any applicable commission fees from the
+    // current balance.
     BigDecimal balance = Optional.ofNullable(account.getBalance()).orElse(BigDecimal.ZERO);
     BigDecimal commission = account.isFreeTransactionAvailable()
             ? BigDecimal.ZERO
@@ -106,7 +110,7 @@ public class CascadingDebitPolicy {
    * @param totalAmount the total amount to be debited across all accounts
    * @return CascadingExecution containing the modified accounts and the payment result
    */
-  private CascadingExecution applyPlan (
+  private CascadingExecution applyPlan(
           DebitCard card, List<PlannedDebit> plan, BigDecimal totalAmount) {
     // Prepare lists to hold the modified accounts and the entries for the payment result
     List<BankAccount> modifiedAccounts = new ArrayList<>();
@@ -117,7 +121,7 @@ public class CascadingDebitPolicy {
     // while also calculating commissions and preparing the result entries.
     for (PlannedDebit step : plan) {
       BankAccount account = step.account();
-      BigDecimal previousBalance = Optional.ofNullable(account.getBalance())
+      final BigDecimal previousBalance = Optional.ofNullable(account.getBalance())
               .orElse(BigDecimal.ZERO);
 
       // Apply the debit operation to the account using the injected AccountBalancePolicy,
@@ -147,7 +151,8 @@ public class CascadingDebitPolicy {
   }
 
   /**
-   * Converts a BankAccount and its debit operation details into a DebitedAccountEntry for the payment result.
+   * Converts a BankAccount and its debit operation details into a DebitedAccountEntry for the
+   * payment result.
    *
    * @param account the bank account that was debited
    * @param debitedAmount the amount that was debited from the account
@@ -168,7 +173,8 @@ public class CascadingDebitPolicy {
   }
 
   /**
-   * Represents a planned debit operation for a specific bank account, including the account and the amount to be debited.
+   * Represents a planned debit operation for a specific bank account, including the account and
+   * the amount to be debited.
    * This is an internal helper record used to facilitate the cascading debit logic.
    */
   private record PlannedDebit(BankAccount account, BigDecimal debitAmount) { }

@@ -12,7 +12,8 @@ public interface YankiEventPublisherPort {
    * Publishes the result of a Yanki payment operation to the event broker.
    *
    * @param outcome the YankiPaymentOutcome containing the details of the payment result
-   * @return Completable that completes when the event is successfully published, or emits an error if the publishing fails
+   * @return Completable that completes when the event is successfully published, or emits an
+   *     error if the publishing fails
    */
   Completable publishPaymentResult(YankiPaymentOutcome outcome);
 }

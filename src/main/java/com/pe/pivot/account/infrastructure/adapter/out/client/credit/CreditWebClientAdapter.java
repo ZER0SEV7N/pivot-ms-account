@@ -59,7 +59,8 @@ public class CreditWebClientAdapter implements CreditClientPort {
    */
   private Single<Boolean> evaluateCreditPredicate(
           String customerId, Predicate<CreditSummaryDto> predicate) {
-    // Fetch customer credits from ms-credit and evaluate the predicate under Circuit Breaker protection.
+    // Fetch customer credits from ms-credit and evaluate the predicate under Circuit Breaker
+    // protection.
     Mono<Boolean> mono = creditWebClient.get()
             .uri(CREDIT_CUSTOMER_URI, customerId)
             .retrieve()

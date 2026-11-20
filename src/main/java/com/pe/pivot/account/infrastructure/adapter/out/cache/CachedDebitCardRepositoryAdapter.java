@@ -23,19 +23,25 @@ import reactor.core.publisher.Mono;
 @Component
 public class CachedDebitCardRepositoryAdapter implements DebitCardRepositoryPort {
   // Cache key prefixes and TTL for Redis caching
-  private static final String KEY_ID_PREFIX = "debitcard:id:"; // Prefix for caching DebitCard by ID
-  private static final String KEY_HASH_PREFIX = "debitcard:hash:"; // Prefix for caching DebitCard by card number hash
-  private static final Duration CACHE_TTL = Duration.ofMinutes(15); // Time-to-live for cached entries in Redis
+  // Prefix for caching DebitCard by ID
+  private static final String KEY_ID_PREFIX = "debitcard:id:";
+  // Prefix for caching DebitCard by card number hash
+  private static final String KEY_HASH_PREFIX = "debitcard:hash:";
+  // Time-to-live for cached entries in Redis
+  private static final Duration CACHE_TTL = Duration.ofMinutes(15);
 
   private final DebitCardRepositoryPort delegate;
   private final ReactiveRedisTemplate<String, DebitCard> debitCardRedisTemplate;
 
   /**
    * Constructor for the CachedDebitCardRepositoryAdapter.
-   * Qualifier is used to inject the specific delegate implementation (DebitCardPersistenceAdapter) for persistence operations.
+   * Qualifier is used to inject the specific delegate implementation
+   * (DebitCardPersistenceAdapter) for persistence operations.
    *
-   * @param delegate the underlying DebitCardRepositoryPort implementation for persistence operations
-   * @param debitCardRedisTemplate the ReactiveRedisTemplate for caching DebitCard objects in Redis
+   * @param delegate the underlying DebitCardRepositoryPort implementation for persistence
+   *     operations
+   * @param debitCardRedisTemplate the ReactiveRedisTemplate for caching DebitCard objects in
+   *     Redis
    */
   public CachedDebitCardRepositoryAdapter(
           @Qualifier("debitCardPersistenceAdapter") DebitCardRepositoryPort delegate,
@@ -66,7 +72,8 @@ public class CachedDebitCardRepositoryAdapter implements DebitCardRepositoryPort
   }
 
   /**
-   * Finds a DebitCard by its unique identifier, first checking the Redis cache before falling back to the underlying repository.
+   * Finds a DebitCard by its unique identifier, first checking the Redis cache before falling
+   * back to the underlying repository.
    *
    * @param id the unique identifier of the DebitCard
    * @return a Maybe emitting the found DebitCard domain model or empty if not found
@@ -80,7 +87,8 @@ public class CachedDebitCardRepositoryAdapter implements DebitCardRepositoryPort
   }
 
   /**
-   * Finds a DebitCard by its hashed card number, first checking the Redis cache before falling back to the underlying repository.
+   * Finds a DebitCard by its hashed card number, first checking the Redis cache before falling
+   * back to the underlying repository.
    *
    * @param cardNumberHash the hashed card number of the DebitCard
    * @return a Maybe emitting the found DebitCard domain model or empty if not found
@@ -154,7 +162,8 @@ public class CachedDebitCardRepositoryAdapter implements DebitCardRepositoryPort
   private Single<DebitCard> cacheDebitCard(DebitCard card) {
     // Cache the DebitCard in Redis by both its ID and card number hash, if they are not null
     Mono<Boolean> putById = card.getId() != null
-            ? debitCardRedisTemplate.opsForValue().set(KEY_ID_PREFIX + card.getId(), card, CACHE_TTL)
+            ? debitCardRedisTemplate.opsForValue()
+            .set(KEY_ID_PREFIX + card.getId(), card, CACHE_TTL)
             : Mono.just(false);
 
     // Cache the DebitCard in Redis by its card number hash, if it is not null
@@ -163,11 +172,14 @@ public class CachedDebitCardRepositoryAdapter implements DebitCardRepositoryPort
             .set(KEY_HASH_PREFIX + card.getCardNumberHash(), card, CACHE_TTL)
             : Mono.just(false);
 
-    // Combine both caching operations and handle any errors gracefully, logging warnings if Redis operations fail
+    // Combine both caching operations and handle any errors gracefully, logging warnings if
+    // Redis operations fail
     return RxJava3Adapter.monoToSingle(
             Mono.when(putById, putByHash)
                     .onErrorResume(ex -> {
-                      log.warn("Redis write failed for debit card {}: {}", card.getId(), ex.getMessage());
+                      log.warn(
+                              "Redis write failed for debit card {}: {}",
+                              card.getId(), ex.getMessage());
                       return Mono.empty();
                     })
                     .thenReturn(card)

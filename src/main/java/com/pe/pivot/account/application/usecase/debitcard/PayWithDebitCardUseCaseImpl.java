@@ -41,9 +41,9 @@ public class PayWithDebitCardUseCaseImpl implements PayWithDebitCardUseCase {
    */
   @Override
   @NonNull
-  public Single<DebitCardPaymentResult> pay (String debitCardId, BigDecimal amount) {
+  public Single<DebitCardPaymentResult> pay(String debitCardId, BigDecimal amount) {
     // Validate that the payment amount is greater than zero
-    if(amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
       return Single.error(
               new BusinessRuleException("Payment amount must be greater than zero."));
     }
@@ -60,7 +60,8 @@ public class PayWithDebitCardUseCaseImpl implements PayWithDebitCardUseCase {
                     // After retrieving all linked accounts,
                     // execute the cascading debit policy to allocate the payment amount across them
                     .flatMap(accounts -> {
-                      CascadingExecution execution = cascadingDebitPolicy.execute(card, accounts, amount);
+                      CascadingExecution execution =
+                              cascadingDebitPolicy.execute(card, accounts, amount);
                       return Flowable.fromIterable(execution.modifiedAccounts())
                               .concatMapSingle(accountRepository::save)
                               .ignoreElements()

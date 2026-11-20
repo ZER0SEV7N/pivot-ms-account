@@ -83,7 +83,8 @@ public class DebitCardPersistenceAdapter implements DebitCardRepositoryPort {
    * Checks if a DebitCard exists with the specified hashed card number.
    *
    * @param cardNumberHash the hashed card number of the DebitCard
-   * @return a Single emitting true if a DebitCard exists with the given cardNumberHash, false otherwise
+   * @return a Single emitting true if a DebitCard exists with the given cardNumberHash, false
+   *     otherwise
    */
   @Override
   public Single<Boolean> existsByCardNumberHash(String cardNumberHash) {

@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
 /**
  * Reactive Redis configuration for caching DebitCard metadata in Spring Boot 4.
  */
@@ -21,7 +22,7 @@ public class RedisConfig {
    * @return a ReactiveRedisTemplate configured for DebitCard objects
    */
   @Bean
-  public ReactiveRedisTemplate<String, DebitCard> debitCardRedisTemplate (
+  public ReactiveRedisTemplate<String, DebitCard> debitCardRedisTemplate(
           ReactiveRedisConnectionFactory factory) {
 
     // Configure key and value serializers for RedisTemplate

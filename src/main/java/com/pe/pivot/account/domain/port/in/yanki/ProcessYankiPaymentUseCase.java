@@ -10,10 +10,12 @@ import io.reactivex.rxjava3.core.Single;
 public interface ProcessYankiPaymentUseCase {
 
   /**
-   * Processes a Yanki payment request by validating the debit card and primary account, and executing the payment.
+   * Processes a Yanki payment request by validating the debit card and primary account, and
+   * executing the payment.
    *
    * @param command the YankiPaymentCommand containing the payment details
-   * @return a Single emitting the YankiPaymentOutcome indicating the result of the payment processing
+   * @return a Single emitting the YankiPaymentOutcome indicating the result of the payment
+   *     processing
    */
   Single<YankiPaymentOutcome> process(YankiPaymentCommand command);
 }

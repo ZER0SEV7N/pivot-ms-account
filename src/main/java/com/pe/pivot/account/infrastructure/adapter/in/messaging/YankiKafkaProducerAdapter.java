@@ -27,7 +27,8 @@ public class YankiKafkaProducerAdapter implements YankiEventPublisherPort {
    * Publishes a Yanki payment result event to the Kafka topic.
    *
    * @param outcome the YankiPaymentOutcome containing the details of the payment result
-   * @return Completable that completes when the event is successfully published to Kafka, or emits an error if the publishing fails
+   * @return Completable that completes when the event is successfully published to Kafka, or
+   *     emits an error if the publishing fails
    */
   @Override
   public Completable publishPaymentResult(YankiPaymentOutcome outcome) {

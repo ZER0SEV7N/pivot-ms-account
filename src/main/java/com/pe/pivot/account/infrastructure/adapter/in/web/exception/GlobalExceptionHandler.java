@@ -35,7 +35,8 @@ public class GlobalExceptionHandler {
    * @return - Single emitting a ResponseEntity containing the ErrorResponse with HTTP status 404
    *     (Not Found)
    */
-  @ExceptionHandler({AccountNotFoundException.class, CustomerNotFoundException.class, DebitCardNotFoundException.class})
+  @ExceptionHandler({AccountNotFoundException.class, CustomerNotFoundException.class,
+      DebitCardNotFoundException.class})
   public Single<ResponseEntity<ErrorResponse>> handleNotFound(RuntimeException ex,
       ServerWebExchange exchange) {
     log.warn("Resource not found: {}", ex.getMessage());

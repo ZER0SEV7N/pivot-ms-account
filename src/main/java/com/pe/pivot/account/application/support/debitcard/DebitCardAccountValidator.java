@@ -31,15 +31,17 @@ public class DebitCardAccountValidator {
             .concatMapCompletable(accountId -> findAccountByIdUseCase.findById(accountId)
                     .flatMapCompletable(account -> {
                       // Validate that the account belongs to the specified customer
-                      if(!customerId.equals(account.getCustomerId())) {
+                      if (!customerId.equals(account.getCustomerId())) {
                         return Completable.error(new BusinessRuleException(
-                                "Account ID " + accountId + " does not belong to customer ID " + customerId));
+                                "Account ID " + accountId + " does not belong to customer ID "
+                                        + customerId));
                       }
 
                       // Validate that the account is ACTIVE before linking it to a debit card
                       if (account.getStatus() != AccountStatus.ACTIVE) {
                         return Completable.error(new BusinessRuleException(
-                                "Cannot link non-ACTIVE account " + accountId + " to a debit card."));
+                                "Cannot link non-ACTIVE account " + accountId
+                                        + " to a debit card."));
                       }
                       return Completable.complete();
                     })

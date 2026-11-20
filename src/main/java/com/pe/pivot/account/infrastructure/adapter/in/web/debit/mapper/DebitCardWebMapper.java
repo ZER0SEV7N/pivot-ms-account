@@ -57,7 +57,8 @@ public class DebitCardWebMapper {
   }
 
   /**
-   * Maps a DebitCard domain object to a DebitCardResponse DTO, masking the card number for security.
+   * Maps a DebitCard domain object to a DebitCardResponse DTO, masking the card number for
+   * security.
    *
    * @param card The DebitCard domain object to be converted.
    * @return The corresponding DebitCardResponse DTO with the masked card number.
@@ -88,7 +89,8 @@ public class DebitCardWebMapper {
   }
 
   /**
-   * Builds a DebitCardResponse DTO from a DebitCard domain object and a specified display card number.
+   * Builds a DebitCardResponse DTO from a DebitCard domain object and a specified display card
+   * number.
    *
    * @param card The DebitCard domain object containing the card details.
    * @param displayCardNumber The card number to be displayed in the response (masked or unmasked).

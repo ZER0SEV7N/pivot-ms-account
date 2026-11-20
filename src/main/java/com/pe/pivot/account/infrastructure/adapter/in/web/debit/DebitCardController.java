@@ -52,10 +52,10 @@ public class DebitCardController {
    * @POST /api/v1/debit-cards
    * @param request - the DebitCardRequest containing the details for the new debit card
    * @body : {
-   *   "customerId": "string",
-   *   "primaryAccountId": "string",
-   *   "secondaryAccountIds": "string",
-   * }
+   *     "customerId": "string",
+   *     "primaryAccountId": "string",
+   *     "secondaryAccountIds": "string",
+   *     }
    * @return - Single emitting a DebitCardResponse with HTTP status 201 (Created)
    *
    */
@@ -133,10 +133,10 @@ public class DebitCardController {
    * @param id the unique identifier of the debit card to update
    * @param request the DebitCardUpdateRequest containing the updated debit card information
    * @body : {
-   *   "primaryAccountId": "string",
-   *   "secondaryAccountIds": "string",
-   *   "status": ACTIVE | BLOCKED | CLOSED
-   * }
+   *     "primaryAccountId": "string",
+   *     "secondaryAccountIds": "string",
+   *     "status": ACTIVE | BLOCKED | CLOSED
+   *     }
    * @return Single emitting a DebitCardResponse with HTTP status 200 (OK)
    */
   @PutMapping("/{id}")
@@ -153,8 +153,8 @@ public class DebitCardController {
    * @param id the unique identifier of the debit card to use for payment
    * @param request the DebitCardPaymentRequest containing the payment amount
    * @body : {
-   *   "amount": 100.00
-   * }
+   *     "amount": 100.00
+   *     }
    * @return Single emitting a DebitCardPaymentResponse with HTTP status 200 (OK)
    */
   @PatchMapping("/{id}/pay")
@@ -169,7 +169,8 @@ public class DebitCardController {
    *
    * @DELETE /api/v1/debit-cards/{id}
    * @param id the unique identifier of the debit card to delete
-   * @return Completable indicating completion of the delete operation with HTTP status 204 (No Content)
+   * @return Completable indicating completion of the delete operation with HTTP status 204
+   *     (No Content)
    */
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
