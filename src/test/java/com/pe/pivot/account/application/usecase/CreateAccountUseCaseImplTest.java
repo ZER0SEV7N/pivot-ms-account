@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.pe.pivot.account.application.support.initializers.AccountDomainInitializer;
+import com.pe.pivot.account.application.support.accounts.AccountDomainInitializer;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
 import com.pe.pivot.account.domain.exception.DuplicateAccountException;
@@ -55,6 +55,8 @@ class CreateAccountUseCaseImplTest {
     accountInitializer = mock(AccountDomainInitializer.class);
     useCase = new CreateAccountUseCaseImpl(accountRepository, customerClient, creditClient,
         List.of(validationStrategy), accountInitializer);
+    // By default, the customer has no overdue debt in ms-credit
+    when(creditClient.hasOverdueDebt(CUSTOMER_ID)).thenReturn(Single.just(false));
   }
 
   @Test
@@ -280,6 +282,25 @@ class CreateAccountUseCaseImplTest {
     // Assert
     observer.assertNoValues();
     observer.assertError(IllegalStateException.class);
+  }
+
+  @Test
+  @DisplayName("Should fail when the customer has an overdue credit debt")
+  void shouldFailWhenCustomerHasOverdueCreditDebt() {
+    // Arrange
+    CustomerSummary customer = customer("PERSONAL", null);
+    BankAccount account = newAccount();
+    when(customerClient.findCustomerById(CUSTOMER_ID)).thenReturn(Maybe.just(customer));
+    when(creditClient.hasOverdueDebt(CUSTOMER_ID)).thenReturn(Single.just(true));
+
+    // Act
+    TestObserver<BankAccount> observer = useCase.create(account).test();
+
+    // Assert
+    observer.assertNoValues();
+    observer.assertError(BusinessRuleException.class);
+    observer.assertError(error -> error.getMessage().contains("overdue credit"));
+    verify(accountRepository, never()).save(any());
   }
 
   private CustomerSummary customer(String customerType, String profile) {

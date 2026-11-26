@@ -12,6 +12,9 @@ public record CustomerClientResponse(
         String profile,
         String documentType,
         String documentNumber,
+        String firstName,
+        String lastName,
+        String businessName,
         String status
 ) {
 }

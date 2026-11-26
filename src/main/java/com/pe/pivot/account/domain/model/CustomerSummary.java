@@ -21,6 +21,9 @@ public class CustomerSummary {
   private String profile;
   private String documentNumber;
   private String status;
+  private String firstName;
+  private String lastName;
+  private String businessName;
 
   /**
    * Checks if the customer is a personal customer.
@@ -65,5 +68,22 @@ public class CustomerSummary {
    */
   public boolean isPyme() {
     return "PYME".equalsIgnoreCase(this.profile);
+  }
+
+  /**
+   * Returns a human-readable display name (business name or personal full name).
+   *
+   * @return formatted customer display name
+   */
+  public String getDisplayName() {
+    // If the customer is a business and has a non-empty business name, return it.
+    if (isBusiness() && this.businessName != null && !this.businessName.isBlank()) {
+      return this.businessName.trim();
+    }
+
+    // If the customer is personal, return the concatenation of first and last names.
+    String first = this.firstName != null ? this.firstName.trim() : "";
+    String last = this.lastName != null ? this.lastName.trim() : "";
+    return (first + " " + last).trim();
   }
 }

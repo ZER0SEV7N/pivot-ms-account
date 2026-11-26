@@ -104,6 +104,58 @@ class CreditWebClientAdapterTest {
   }
 
   @Test
+  @DisplayName("Should report an overdue debt when a matching overdue product exists")
+  void shouldReportOverdueDebtWhenMatchingOverdueProductExists() {
+    // Arrange
+    String body = """
+        [
+          {
+            "id": "credit-1",
+            "customerId": "customer-1",
+            "creditType": "PERSONAL_CREDIT_CARD",
+            "status": "OVERDUE",
+            "usedAmount": 100.00
+          }
+        ]
+        """;
+    CreditWebClientAdapter adapter = adapter(jsonResponse(HttpStatus.OK, body));
+
+    // Act
+    TestObserver<Boolean> observer = adapter.hasOverdueDebt("customer-1").test();
+
+    // Assert
+    observer.assertNoErrors();
+    observer.assertComplete();
+    observer.assertValue(true);
+  }
+
+  @Test
+  @DisplayName("Should report no overdue debt when every product is up to date")
+  void shouldReportNoOverdueDebtWhenEveryProductIsUpToDate() {
+    // (error: no overdue debt)
+    // Arrange
+    String body = """
+        [
+          {
+            "id": "credit-1",
+            "customerId": "customer-1",
+            "creditType": "PERSONAL_CREDIT_CARD",
+            "status": "ACTIVE"
+          }
+        ]
+        """;
+    CreditWebClientAdapter adapter = adapter(jsonResponse(HttpStatus.OK, body));
+
+    // Act
+    TestObserver<Boolean> observer = adapter.hasOverdueDebt("customer-1").test();
+
+    // Assert
+    observer.assertNoErrors();
+    observer.assertComplete();
+    observer.assertValue(false);
+  }
+
+  @Test
   @DisplayName("Should translate a communication failure into a BusinessRuleException")
   void shouldTranslateCommunicationFailure() {
     // Arrange

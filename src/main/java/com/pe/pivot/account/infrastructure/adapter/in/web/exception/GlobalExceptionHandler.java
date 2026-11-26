@@ -3,8 +3,9 @@ package com.pe.pivot.account.infrastructure.adapter.in.web.exception;
 import com.pe.pivot.account.domain.exception.AccountNotFoundException;
 import com.pe.pivot.account.domain.exception.BusinessRuleException;
 import com.pe.pivot.account.domain.exception.CustomerNotFoundException;
+import com.pe.pivot.account.domain.exception.DebitCardNotFoundException;
 import com.pe.pivot.account.domain.exception.DuplicateAccountException;
-import com.pe.pivot.account.infrastructure.adapter.in.web.dto.ErrorResponse;
+import com.pe.pivot.account.infrastructure.adapter.in.web.account.dto.ErrorResponse;
 import io.reactivex.rxjava3.core.Single;
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -34,7 +35,8 @@ public class GlobalExceptionHandler {
    * @return - Single emitting a ResponseEntity containing the ErrorResponse with HTTP status 404
    *     (Not Found)
    */
-  @ExceptionHandler({AccountNotFoundException.class, CustomerNotFoundException.class})
+  @ExceptionHandler({AccountNotFoundException.class, CustomerNotFoundException.class,
+      DebitCardNotFoundException.class})
   public Single<ResponseEntity<ErrorResponse>> handleNotFound(RuntimeException ex,
       ServerWebExchange exchange) {
     log.warn("Resource not found: {}", ex.getMessage());

@@ -95,4 +95,91 @@ class CustomerSummaryTest {
     assertThat(customer.isVip()).isFalse();
     assertThat(customer.isPyme()).isFalse();
   }
+
+  @Test
+  @DisplayName("Should return the business name as display name for a business customer")
+  void shouldReturnBusinessNameAsDisplayNameForBusinessCustomer() {
+    // (happy path)
+    // Arrange
+    CustomerSummary customer = CustomerSummary.builder()
+            .customerType("BUSINESS")
+            .businessName("  Pivot SAC  ")
+            .firstName("Ignored")
+            .lastName("Value")
+            .build();
+
+    // Act
+    String displayName = customer.getDisplayName();
+
+    // Assert
+    assertThat(displayName).isEqualTo("Pivot SAC");
+  }
+
+  @Test
+  @DisplayName("Should return the full name as display name for a personal customer")
+  void shouldReturnFullNameAsDisplayNameForPersonalCustomer() {
+    // Arrange
+    CustomerSummary customer = CustomerSummary.builder()
+            .customerType("PERSONAL")
+            .firstName("  Ada ")
+            .lastName(" Lovelace  ")
+            .build();
+
+    // Act
+    String displayName = customer.getDisplayName();
+
+    // Assert
+    assertThat(displayName).isEqualTo("Ada Lovelace");
+  }
+
+  @Test
+  @DisplayName("Should fall back to the personal name when the business name is blank")
+  void shouldFallBackToPersonalNameWhenBusinessNameIsBlank() {
+    // (error: blank business name)
+    // Arrange
+    CustomerSummary customer = CustomerSummary.builder()
+            .customerType("BUSINESS")
+            .businessName("   ")
+            .firstName("Ada")
+            .lastName("Lovelace")
+            .build();
+
+    // Act
+    String displayName = customer.getDisplayName();
+
+    // Assert
+    assertThat(displayName).isEqualTo("Ada Lovelace");
+  }
+
+  @Test
+  @DisplayName("Should return an empty display name when no names are present")
+  void shouldReturnEmptyDisplayNameWhenNoNamesArePresent() {
+    // (error: missing names)
+    // Arrange
+    CustomerSummary customer = CustomerSummary.builder()
+            .customerType("PERSONAL")
+            .build();
+
+    // Act
+    String displayName = customer.getDisplayName();
+
+    // Assert
+    assertThat(displayName).isEmpty();
+  }
+
+  @Test
+  @DisplayName("Should return the available name when only one is present")
+  void shouldReturnAvailableNameWhenOnlyOneIsPresent() {
+    // Arrange
+    CustomerSummary customer = CustomerSummary.builder()
+            .customerType("PERSONAL")
+            .firstName("Ada")
+            .build();
+
+    // Act
+    String displayName = customer.getDisplayName();
+
+    // Assert
+    assertThat(displayName).isEqualTo("Ada");
+  }
 }
