@@ -1,0 +1,103 @@
+name: Pivot Banking CI Quality Gate
+
+on:
+  push:
+    branches: [master, main, 'phase-*']
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks secret detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-quality:
+    name: Build, Checkstyle, Tests & JaCoCo >= 90%
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile & Google Java Style Check
+        # Note: pom.xml defaults to failsOnError=false; override here to enforce strict Google Style in CI.
+        # If a repo still has legacy Checkstyle warnings, temporarily set -Dcheckstyle.failsOnError=false.
+        run: mvn -B test-compile checkstyle:check -Dcheckstyle.failsOnError=true -Dcheckstyle.violationSeverity=error
+
+      - name: Run Unit Tests & Enforce JaCoCo >= 90% Gate
+        # Executes test, jacoco:report, and jacoco:check (minimum 0.90 instruction coverage from pom.xml)
+        run: mvn -B verify -Dcheckstyle.skip=true
+
+      - name: Publish JaCoCo Coverage Summary
+        if: always()
+        shell: bash
+        run: |
+          CSV="target/site/jacoco/jacoco.csv"
+          if [ -f "$CSV" ]; then
+            awk -F',' '
+              NR > 1 {
+                inst_m += $4; inst_c += $5;
+                br_m   += $6; br_c   += $7;
+                ln_m   += $8; ln_c   += $9;
+              }
+              END {
+                inst_t = inst_m + inst_c;
+                br_t   = br_m + br_c;
+                ln_t   = ln_m + ln_c;
+                inst_p = (inst_t > 0) ? (inst_c * 100 / inst_t) : 0;
+                br_p   = (br_t   > 0) ? (br_c   * 100 / br_t)   : 0;
+                ln_p   = (ln_t   > 0) ? (ln_c   * 100 / ln_t)   : 0;
+                printf "### JaCoCo Coverage Summary\n\n" >> ENVIRON["GITHUB_STEP_SUMMARY"];
+                printf "| Metric | Covered | Total | Coverage |\n" >> ENVIRON["GITHUB_STEP_SUMMARY"];
+                printf "| :--- | ---: | ---: | ---: |\n" >> ENVIRON["GITHUB_STEP_SUMMARY"];
+                printf "| Instructions (Gate >= 90%%) | %d | %d | **%.2f%%** |\n", inst_c, inst_t, inst_p >> ENVIRON["GITHUB_STEP_SUMMARY"];
+                printf "| Branches | %d | %d | **%.2f%%** |\n", br_c, br_t, br_p >> ENVIRON["GITHUB_STEP_SUMMARY"];
+                printf "| Lines | %d | %d | **%.2f%%** |\n", ln_c, ln_t, ln_p >> ENVIRON["GITHUB_STEP_SUMMARY"];
+              }
+            ' "$CSV"
+          fi
+
+      - name: Upload JaCoCo & Checkstyle Reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: quality-reports
+          path: |
+            target/site/jacoco/
+            target/checkstyle-result.xml
+          if-no-files-found: ignore
+
+  docker-build-check:
+    name: Docker Image Build Verification
+    runs-on: ubuntu-latest
+    needs: [secret-scan, build-and-quality]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Verify Dockerfile builds cleanly
+        if: hashFiles('Dockerfile') != ''
+        run: docker build --no-cache -t pivot-ci-verify:latest .

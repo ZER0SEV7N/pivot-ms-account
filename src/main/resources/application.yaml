@@ -5,7 +5,7 @@ spring:
     import:
       - "optional:file:.env[.properties]"
       - "optional:file:ms-account/.env[.properties]"
-      - "optional:configserver:http://localhost:8888"
+      - "optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}"
       - "optional:vault://"
   cloud:
     vault:
