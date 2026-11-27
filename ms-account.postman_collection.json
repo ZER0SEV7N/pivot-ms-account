@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
-    "name": "Pivot Banking - ms-account (Phase II)",
-    "description": "Complete Postman Collection for pivot-ms-account covering Phase I & Phase II rules (VIP/PYME active credit card verification against ms-credit, minimum opening amount validation, and automatic commission fee after exceeding free monthly transactions).",
+    "name": "Pivot Banking - ms-account (Phase III)",
+    "description": "Postman Collection for pivot-ms-account (Phase III): accounts, automatic commission, debit cards, cascading payments (primary → secondary accounts), and account lifecycle. Yanki settlement is Kafka-only: this service consumes yanki.payment.requested and publishes yanki.payment.result, there is no REST endpoint for it. Prerequisite: run ms-customer first and set personalCustomerId / businessCustomerId.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -287,6 +287,560 @@
           ]
         }
       }
+    },
+    {
+      "name": "9. Get All Accounts (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "10. Get Account by ID (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts/{{accountId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts",
+            "{{accountId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "11. Get Accounts by Customer ID (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts/customer/{{businessCustomerId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts",
+            "customer",
+            "{{businessCustomerId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "12. Update Checking Account Terms (PUT /accounts/{id})",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts/{{checkingAccountId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts",
+            "{{checkingAccountId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"{{businessCustomerId}}\",\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"PEN\",\n  \"maintenanceFee\": 0,\n  \"maxFreeMonthlyTransactions\": 3,\n  \"transactionCommissionFee\": 5,\n  \"holders\": [\n    \"20556677889\"\n  ],\n  \"status\": \"ACTIVE\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Open Second Business CHECKING Account (201 Created - cascade source)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"{{businessCustomerId}}\",\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"PEN\",\n  \"balance\": 2000,\n  \"maxFreeMonthlyTransactions\": 3,\n  \"transactionCommissionFee\": 5,\n  \"holders\": [\n    \"20556677889\"\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "if (jsonData.id) { pm.collectionVariables.set(\"secondaryAccountId\", jsonData.id); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Create Business Debit Card with Cascading Accounts (201 Created)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"{{businessCustomerId}}\",\n  \"primaryAccountId\": \"{{checkingAccountId}}\",\n  \"secondaryAccountIds\": [\n    \"{{secondaryAccountId}}\"\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "if (jsonData.id) {",
+              "    pm.collectionVariables.set(\"debitCardId\", jsonData.id);",
+              "    pm.collectionVariables.set(\"cardNumber\", jsonData.cardNumber);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Get Debit Card by ID (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{debitCardId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{debitCardId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "16. Get Debit Card by Number (200 OK - SHA-256 blind index)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/number/{{cardNumber}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "number",
+            "{{cardNumber}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "17. Get Debit Cards by Customer ID (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/customer/{{businessCustomerId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "customer",
+            "{{businessCustomerId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "18. Get Debit Card Primary Account Balance (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{debitCardId}}/balance",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{debitCardId}}",
+            "balance"
+          ]
+        }
+      }
+    },
+    {
+      "name": "19. Pay with Debit Card 10500.00 - Cascades to Secondary Account (200 OK)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{debitCardId}}/pay",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{debitCardId}}",
+            "pay"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 10500\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"The payment was split across primary and secondary accounts\", function () {",
+              "    pm.expect(jsonData.debitedAccounts.length).to.be.at.least(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20. [Error 400] Pay with Debit Card - Insufficient Funds in All Linked Accounts",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{debitCardId}}/pay",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{debitCardId}}",
+            "pay"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 999999\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21. Block Debit Card (PUT /debit-cards/{id} - status BLOCKED)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{debitCardId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{debitCardId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"primaryAccountId\": \"{{checkingAccountId}}\",\n  \"secondaryAccountIds\": [\n    \"{{secondaryAccountId}}\"\n  ],\n  \"status\": \"BLOCKED\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Card is BLOCKED\", function () { pm.expect(pm.response.json().status).to.eql(\"BLOCKED\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22. Unblock Debit Card (PUT /debit-cards/{id} - status ACTIVE)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{debitCardId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{debitCardId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"primaryAccountId\": \"{{checkingAccountId}}\",\n  \"secondaryAccountIds\": [\n    \"{{secondaryAccountId}}\"\n  ],\n  \"status\": \"ACTIVE\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Card is ACTIVE again\", function () { pm.expect(pm.response.json().status).to.eql(\"ACTIVE\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23. Recharge Primary Account after Cascade (DEPOSIT 3000.00)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts/{{checkingAccountId}}/balance",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts",
+            "{{checkingAccountId}}",
+            "balance"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationType\": \"DEPOSIT\",\n  \"amount\": 3000\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24. Create Personal Debit Card (201 Created - to test DELETE)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"{{personalCustomerId}}\",\n  \"primaryAccountId\": \"{{accountId}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "if (jsonData.id) { pm.collectionVariables.set(\"personalDebitCardId\", jsonData.id); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25. Delete Personal Debit Card (204 No Content - soft delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/debit-cards/{{personalDebitCardId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "debit-cards",
+            "{{personalDebitCardId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 204 No Content\", function () { pm.response.to.have.status(204); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26. [Error 400] Close Account with Remaining Balance",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts/{{secondaryAccountId}}",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts",
+            "{{secondaryAccountId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27. [Error 404] Get Unknown Account",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{urlMsAccount}}/accounts/64b000000000000000000000",
+          "host": [
+            "{{urlMsAccount}}"
+          ],
+          "path": [
+            "accounts",
+            "64b000000000000000000000"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404 Not Found\", function () { pm.response.to.have.status(404); });"
+            ]
+          }
+        }
+      ]
     }
   ],
   "variable": [
@@ -298,12 +852,14 @@
     {
       "key": "personalCustomerId",
       "value": "",
-      "type": "string"
+      "type": "string",
+      "description": "ID del cliente personal creado en ms-customer."
     },
     {
       "key": "businessCustomerId",
       "value": "",
-      "type": "string"
+      "type": "string",
+      "description": "ID del cliente business creado en ms-customer."
     },
     {
       "key": "accountId",
@@ -319,6 +875,30 @@
       "key": "checkingAccountId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "debitCardId",
+      "value": "",
+      "type": "string",
+      "description": "Se completa en el request 14. Lo usan ms-transaction y ms-yanki."
+    },
+    {
+      "key": "cardNumber",
+      "value": "",
+      "type": "string",
+      "description": "Número de tarjeta devuelto una sola vez en el request 14."
+    },
+    {
+      "key": "secondaryAccountId",
+      "value": "",
+      "type": "string",
+      "description": "Segunda cuenta CHECKING del cliente business (request 13)."
+    },
+    {
+      "key": "personalDebitCardId",
+      "value": "",
+      "type": "string",
+      "description": "Tarjeta personal usada solo para probar DELETE (request 24)."
     }
   ]
 }
