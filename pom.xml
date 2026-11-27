@@ -58,6 +58,16 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		<!-- Distributed tracing: Micrometer Tracing + OpenTelemetry (OTLP) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-opentelemetry</artifactId>
+		</dependency>
+		<!-- Auto-configured WebClient.Builder (needed for W3C trace propagation) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webclient</artifactId>
+		</dependency>
 
 		<!-- 6. RxJava 3 Core (Mandatory per project specification) -->
 		<dependency>

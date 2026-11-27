@@ -7,7 +7,7 @@
     <!-- Console appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%property{APP_NAME}] [corrId=%X{X-Correlation-Id:-N/A}] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%property{APP_NAME}] [corrId=%X{X-Correlation-Id:-N/A}] [traceId=%X{traceId:-N/A} spanId=%X{spanId:-N/A}] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -19,7 +19,7 @@
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%property{APP_NAME}] [corrId=%X{X-Correlation-Id:-N/A}] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%property{APP_NAME}] [corrId=%X{X-Correlation-Id:-N/A}] [traceId=%X{traceId:-N/A} spanId=%X{spanId:-N/A}] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 

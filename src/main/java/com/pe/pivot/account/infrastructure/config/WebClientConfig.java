@@ -25,8 +25,8 @@ public class WebClientConfig {
    * @return - A configured WebClient instance for the customer service.
    */
   @Bean
-  public WebClient customerWebClient() {
-    return WebClient.builder()
+  public WebClient customerWebClient(WebClient.Builder builder) {
+    return builder.clone()
         .baseUrl(customerServiceUrl)
         .build();
   }
@@ -37,8 +37,8 @@ public class WebClientConfig {
    * @return - A configured WebClient instance for the credit service.
    */
   @Bean
-  public WebClient creditWebClient() {
-    return WebClient.builder()
+  public WebClient creditWebClient(WebClient.Builder builder) {
+    return builder.clone()
         .baseUrl(creditServiceUrl)
         .build();
   }
